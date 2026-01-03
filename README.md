@@ -1,6 +1,6 @@
-# 🖥️ Mac Storage Monitor
+# 🖥️ Mac Monitor Pro v2.0
 
-Sistema de monitoramento inteligente de armazenamento para macOS.
+Sistema completo de monitoramento para macOS: armazenamento, CPU, RAM, processos e iCloud.
 
 ## 🚀 Instalação Rápida
 
@@ -12,7 +12,13 @@ chmod +x start.sh liberar_espaco_icloud.sh
 
 ## 📊 Dashboard Web
 
-Acesse: **http://localhost:8080**
+| Tipo | URL |
+|------|-----|
+| **Local** | http://localhost:8888 |
+| **Rede Local** | http://[SEU-IP]:8888 |
+| **🔗 Link Único (Tailscale)** | http://macbook-pro-de-danillo.tail556dd0.ts.net:8888 |
+
+> O link Tailscale funciona de qualquer dispositivo conectado à sua rede Tailscale (iPhone, iPad, outro Mac, servidor).
 
 ### Funcionalidades:
 - ✅ Monitoramento em tempo real do disco

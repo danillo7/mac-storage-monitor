@@ -39,7 +39,7 @@ import uvicorn
 # ═══════════════════════════════════════════════════════════════════════════════
 
 APP_NAME = "Mac Command Center Pro"
-APP_VERSION = "3.0.0"
+APP_VERSION = "3.1.0"
 PORT = 8888
 ICLOUD_DIR = Path.home() / "Library/Mobile Documents/com~apple~CloudDocs"
 
@@ -1058,18 +1058,67 @@ def get_dashboard_html() -> str:
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        /* ═══════════════════════════════════════════════════════════════════════
+           PREMIUM THEME SYSTEM - Light/Dark/Auto
+           ═══════════════════════════════════════════════════════════════════════ */
+
         :root {
+            /* Dark Theme (Default) */
             --bg-primary: #0a0a0f;
             --bg-secondary: #12121a;
             --bg-card: #1a1a24;
+            --bg-hover: rgba(255,255,255,0.05);
             --border-color: rgba(255,255,255,0.08);
+            --border-hover: rgba(255,255,255,0.15);
             --text-primary: #ffffff;
             --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
             --accent-blue: #3b82f6;
             --accent-green: #22c55e;
             --accent-red: #ef4444;
             --accent-orange: #f97316;
             --accent-purple: #8b5cf6;
+            --accent-cyan: #06b6d4;
+            --glass-bg: rgba(26, 26, 36, 0.8);
+            --glass-border: rgba(255,255,255,0.08);
+            --shadow-color: rgba(0,0,0,0.4);
+            --gradient-primary: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            --gradient-success: linear-gradient(135deg, #22c55e, #06b6d4);
+            --gradient-danger: linear-gradient(135deg, #ef4444, #f97316);
+        }
+
+        /* Light Theme */
+        [data-theme="light"] {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #f1f5f9;
+            --bg-card: #ffffff;
+            --bg-hover: rgba(0,0,0,0.03);
+            --border-color: rgba(0,0,0,0.08);
+            --border-hover: rgba(0,0,0,0.15);
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --glass-bg: rgba(255, 255, 255, 0.9);
+            --glass-border: rgba(0,0,0,0.08);
+            --shadow-color: rgba(0,0,0,0.1);
+        }
+
+        /* Auto (System) Theme */
+        @media (prefers-color-scheme: light) {
+            [data-theme="auto"] {
+                --bg-primary: #f8fafc;
+                --bg-secondary: #f1f5f9;
+                --bg-card: #ffffff;
+                --bg-hover: rgba(0,0,0,0.03);
+                --border-color: rgba(0,0,0,0.08);
+                --border-hover: rgba(0,0,0,0.15);
+                --text-primary: #0f172a;
+                --text-secondary: #475569;
+                --text-muted: #94a3b8;
+                --glass-bg: rgba(255, 255, 255, 0.9);
+                --glass-border: rgba(0,0,0,0.08);
+                --shadow-color: rgba(0,0,0,0.1);
+            }
         }
 
         * { box-sizing: border-box; }
@@ -1083,16 +1132,79 @@ def get_dashboard_html() -> str:
         }
 
         .glass-card {
-            background: rgba(26, 26, 36, 0.8);
+            background: var(--glass-bg);
             backdrop-filter: blur(20px);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            transition: all 0.3s ease;
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 30px var(--shadow-color);
         }
 
         .glass-card:hover {
-            border-color: rgba(255,255,255,0.15);
-            transform: translateY(-2px);
+            border-color: var(--border-hover);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px var(--shadow-color);
+        }
+
+        /* Premium Theme Toggle */
+        .theme-toggle {
+            display: flex;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 4px;
+            gap: 2px;
+            border: 1px solid var(--border-color);
+        }
+
+        .theme-btn {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .theme-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .theme-btn.active {
+            background: var(--accent-blue);
+            color: white;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+        }
+
+        .theme-btn i {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Premium Gradient Text */
+        .gradient-text {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Premium Badge */
+        .premium-badge {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
         }
 
         .storage-bar {
@@ -1264,27 +1376,48 @@ def get_dashboard_html() -> str:
     </style>
 </head>
 <body>
-    <div id="app" class="min-h-screen">
-        <!-- Header -->
-        <header class="sticky top-0 z-50 backdrop-blur-xl bg-[#0a0a0f]/80 border-b border-white/5">
+    <div id="app" class="min-h-screen" data-theme="dark">
+        <!-- Premium Header -->
+        <header class="sticky top-0 z-50 backdrop-blur-xl border-b" style="background: var(--glass-bg); border-color: var(--border-color);">
             <div class="max-w-[1800px] mx-auto px-6 py-4">
                 <div class="flex items-center justify-between">
+                    <!-- Logo & Brand -->
                     <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                            <i data-lucide="cpu" class="w-5 h-5"></i>
+                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                            <i data-lucide="cpu" class="w-6 h-6 text-white"></i>
                         </div>
                         <div>
-                            <h1 class="text-lg font-semibold">Mac Command Center</h1>
-                            <p class="text-xs text-zinc-500">Pro v3.0</p>
+                            <div class="flex items-center gap-2">
+                                <h1 class="text-xl font-bold gradient-text">Mac Command Center</h1>
+                                <span class="premium-badge">PRO</span>
+                            </div>
+                            <p class="text-xs" style="color: var(--text-muted);">Enterprise System Monitor v3.1</p>
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-3">
-                        <div id="connection-status" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 text-green-400 text-sm">
+                    <!-- Center: Theme Toggle -->
+                    <div class="theme-toggle">
+                        <button class="theme-btn" data-theme-value="light" title="Modo Claro">
+                            <i data-lucide="sun" class="w-4 h-4"></i>
+                            <span class="hidden sm:inline">Claro</span>
+                        </button>
+                        <button class="theme-btn active" data-theme-value="dark" title="Modo Escuro">
+                            <i data-lucide="moon" class="w-4 h-4"></i>
+                            <span class="hidden sm:inline">Escuro</span>
+                        </button>
+                        <button class="theme-btn" data-theme-value="auto" title="Acompanhar Sistema">
+                            <i data-lucide="monitor" class="w-4 h-4"></i>
+                            <span class="hidden sm:inline">Auto</span>
+                        </button>
+                    </div>
+
+                    <!-- Right: Status -->
+                    <div class="flex items-center gap-4">
+                        <div id="connection-status" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 text-sm font-medium">
                             <span class="w-2 h-2 rounded-full bg-green-400 pulse"></span>
-                            <span>Conectado</span>
+                            <span>Ao Vivo</span>
                         </div>
-                        <div id="clock" class="text-sm text-zinc-400 font-mono"></div>
+                        <div id="clock" class="text-sm font-mono px-4 py-2 rounded-xl" style="background: var(--bg-secondary); color: var(--text-secondary);"></div>
                     </div>
                 </div>
             </div>
@@ -1322,6 +1455,51 @@ def get_dashboard_html() -> str:
     </div>
 
     <script>
+    // ═══════════════════════════════════════════════════════════════════════════
+    // PREMIUM THEME SYSTEM
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    const ThemeManager = {
+        init() {
+            const saved = localStorage.getItem('theme') || 'dark';
+            this.setTheme(saved);
+            this.bindEvents();
+        },
+
+        setTheme(theme) {
+            const app = document.getElementById('app');
+            if (app) {
+                app.setAttribute('data-theme', theme);
+            }
+            localStorage.setItem('theme', theme);
+            this.updateButtons(theme);
+        },
+
+        updateButtons(activeTheme) {
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                const isActive = btn.dataset.themeValue === activeTheme;
+                btn.classList.toggle('active', isActive);
+            });
+        },
+
+        bindEvents() {
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const theme = btn.dataset.themeValue;
+                    this.setTheme(theme);
+                    showToast('Tema alterado para ' + (theme === 'dark' ? 'Escuro' : theme === 'light' ? 'Claro' : 'Automático'), 'success');
+                });
+            });
+
+            // Listen to system preference changes
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+                if (localStorage.getItem('theme') === 'auto') {
+                    this.setTheme('auto');
+                }
+            });
+        }
+    };
+
     // ═══════════════════════════════════════════════════════════════════════════
     // STATE MANAGEMENT
     // ═══════════════════════════════════════════════════════════════════════════
@@ -2152,7 +2330,7 @@ def get_dashboard_html() -> str:
             info: 'bg-blue-500',
             warning: 'bg-amber-500'
         };
-        toast.className = \`fixed bottom-4 right-4 px-6 py-3 rounded-xl \${colors[type]} text-white font-medium shadow-2xl z-50 animate-pulse\`;
+        toast.className = 'fixed bottom-4 right-4 px-6 py-3 rounded-xl ' + colors[type] + ' text-white font-medium shadow-2xl z-50 animate-pulse';
         toast.innerHTML = message;
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 3000);
@@ -2421,6 +2599,9 @@ def get_dashboard_html() -> str:
     // ═══════════════════════════════════════════════════════════════════════════
 
     document.addEventListener('DOMContentLoaded', () => {
+        // Initialize Premium Theme System
+        ThemeManager.init();
+
         lucide.createIcons();
         loadAllData();
         connectWebSocket();

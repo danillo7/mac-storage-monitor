@@ -20,8 +20,9 @@ pip install -q -r requirements.txt
 
 # Iniciar servidor
 echo ""
-echo "🚀 Iniciando Mac Storage Monitor..."
-echo "📊 Dashboard: http://localhost:8080"
+echo "🚀 Iniciando Mac Monitor Pro v2.0..."
+echo "📊 Dashboard: http://localhost:8888"
+echo "📊 Na rede:   http://$(ipconfig getifaddr en0 2>/dev/null || echo 'N/A'):8888"
 echo ""
 echo "Pressione Ctrl+C para encerrar"
 echo ""

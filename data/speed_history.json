@@ -1,0 +1,55 @@
+{
+  "tests": [
+    {
+      "timestamp": "2026-01-03T21:42:04.341998",
+      "download_mbps": 0,
+      "upload_mbps": 0,
+      "latency_ms": 23.3,
+      "jitter_ms": 40.6,
+      "server": "Cloudflare",
+      "provider": {
+        "ip": "",
+        "city": "Unknown",
+        "region": "",
+        "country": "BR",
+        "org": "",
+        "provider_name": "Unknown"
+      },
+      "status": "completed"
+    },
+    {
+      "timestamp": "2026-01-03T21:48:41.153379",
+      "download_mbps": 2.1,
+      "upload_mbps": 0.5,
+      "latency_ms": 19.8,
+      "jitter_ms": 34.4,
+      "server": "Cloudflare",
+      "provider": {
+        "ip": "",
+        "city": "Unknown",
+        "region": "",
+        "country": "BR",
+        "org": "",
+        "provider_name": "Unknown"
+      },
+      "status": "completed"
+    },
+    {
+      "timestamp": "2026-01-04T00:19:54.202737",
+      "download_mbps": 2.6,
+      "upload_mbps": 0.4,
+      "latency_ms": 19.4,
+      "jitter_ms": 31.6,
+      "server": "Cloudflare",
+      "provider": {
+        "ip": "",
+        "city": "Unknown",
+        "region": "",
+        "country": "BR",
+        "org": "",
+        "provider_name": "Unknown"
+      },
+      "status": "completed"
+    }
+  ]
+}

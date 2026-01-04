@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NERD SPACE V5.0 - AI FIRST Edition</title>
+    <link rel="stylesheet" href="/static/css/nerdspace.css">
+</head>
+<body>
+    <!-- Sticky Navigation -->
+    <nav class="nav-sticky">
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+            <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent-blue);">
+                🚀 NERD SPACE
+            </div>
+            <div class="nav-tabs" id="nav-tabs">
+                <button class="nav-tab active" data-tab="dashboard">📊 Dashboard</button>
+                <button class="nav-tab" data-tab="claude">🤖 Claude Max <span class="badge-new">20x</span></button>
+                <button class="nav-tab" data-tab="storage">💾 Storage</button>
+                <button class="nav-tab" data-tab="network">🌐 Network</button>
+                <button class="nav-tab" data-tab="dev">🛠️ Dev</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main style="padding: 1.5rem; max-width: 1400px; margin: 0 auto;">
+
+        <!-- Tab: Dashboard -->
+        <section id="tab-dashboard" class="tab-content">
+            <!-- System Info Row -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+                <!-- macOS Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><span style="margin-right: 0.5rem;">🍎</span> macOS</div>
+                    </div>
+                    <div id="macos-content"><div class="skeleton skeleton-block" style="height: 80px;"></div></div>
+                </div>
+
+                <!-- Hardware Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><span style="margin-right: 0.5rem;">💻</span> Hardware</div>
+                    </div>
+                    <div id="hardware-content"><div class="skeleton skeleton-block" style="height: 80px;"></div></div>
+                </div>
+
+                <!-- Uptime Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><span style="margin-right: 0.5rem;">⏱️</span> Uptime</div>
+                    </div>
+                    <div id="uptime-content"><div class="skeleton skeleton-block" style="height: 80px;"></div></div>
+                </div>
+            </div>
+
+            <!-- Monitors Visualization -->
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <div class="card-header">
+                    <div class="card-title"><span style="margin-right: 0.5rem;">🖥️</span> Monitores</div>
+                </div>
+                <div id="monitors-container"><div class="skeleton skeleton-block" style="height: 150px;"></div></div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span style="margin-right: 0.5rem;">⚡</span> Quick Links</div>
+                </div>
+                <div id="quick-links" class="quick-links"></div>
+            </div>
+        </section>
+
+        <!-- Tab: Claude Max -->
+        <section id="tab-claude" class="tab-content" style="display: none;">
+            <div id="claude-stats"><div class="skeleton skeleton-block" style="height: 300px;"></div></div>
+        </section>
+
+        <!-- Tab: Storage -->
+        <section id="tab-storage" class="tab-content" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span style="margin-right: 0.5rem;">💾</span> Storage Analysis (APFS)</div>
+                </div>
+                <div id="storage-content"><div class="skeleton skeleton-block" style="height: 250px;"></div></div>
+            </div>
+        </section>
+
+        <!-- Tab: Network -->
+        <section id="tab-network" class="tab-content" style="display: none;">
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <div class="card-header">
+                    <div class="card-title"><span style="margin-right: 0.5rem;">🌐</span> Speed Test</div>
+                    <button id="run-speedtest" style="background: var(--accent-blue); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer;">▶ Run Test</button>
+                </div>
+                <div id="speedtest-content">
+                    <div class="speedtest-container">
+                        <div class="speedtest-metric">
+                            <div class="speedtest-value text-orange" id="ping-value">--</div>
+                            <div class="speedtest-unit">ms</div>
+                            <div class="speedtest-label">Ping</div>
+                        </div>
+                        <div class="speedtest-metric">
+                            <div class="speedtest-value text-green" id="download-value">--</div>
+                            <div class="speedtest-unit">Mbps</div>
+                            <div class="speedtest-label">Download</div>
+                        </div>
+                        <div class="speedtest-metric">
+                            <div class="speedtest-value text-blue" id="upload-value">--</div>
+                            <div class="speedtest-unit">Mbps</div>
+                            <div class="speedtest-label">Upload</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab: Dev Tools -->
+        <section id="tab-dev" class="tab-content" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span style="margin-right: 0.5rem;">🛠️</span> Development Tools</div>
+                </div>
+                <div id="devtools-content"><div class="skeleton skeleton-block" style="height: 200px;"></div></div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+    // NERD SPACE V5.0 - Inline JS
+
+    // Tab Navigation
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabId = tab.dataset.tab;
+
+            // Update active tab
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            // Show/hide content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.style.display = content.id === 'tab-' + tabId ? 'block' : 'none';
+            });
+
+            // Load data for tab
+            loadTabData(tabId);
+        });
+    });
+
+    // API Helper
+    async function api(endpoint) {
+        try {
+            const res = await fetch('/api' + endpoint);
+            return await res.json();
+        } catch (e) {
+            console.error('API Error:', endpoint, e);
+            return null;
+        }
+    }
+
+    // Load data for each tab
+    async function loadTabData(tabId) {
+        switch(tabId) {
+            case 'dashboard': loadDashboard(); break;
+            case 'claude': loadClaude(); break;
+            case 'storage': loadStorage(); break;
+            case 'network': loadNetwork(); break;
+            case 'dev': loadDevTools(); break;
+        }
+    }
+
+    // Dashboard
+    async function loadDashboard() {
+        // macOS
+        const macos = await api('/macos');
+        if (macos) {
+            document.getElementById('macos-content').innerHTML = `
+                <div style="font-size: 1.5rem; font-weight: 700;">${macos.codename} ${macos.version}</div>
+                <div style="color: var(--text-muted); font-size: 0.875rem;">Build ${macos.build}</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 0.5rem;">Kernel ${macos.kernel}</div>
+            `;
+        }
+
+        // Hardware
+        const hw = await api('/dev-tools');
+        if (hw) {
+            document.getElementById('hardware-content').innerHTML = `
+                <div style="font-size: 1.25rem; font-weight: 600;">Apple M3 Max</div>
+                <div style="color: var(--text-muted); font-size: 0.875rem;">36 GB RAM</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 0.5rem;">Python ${hw.python} • Node ${hw.node}</div>
+            `;
+        }
+
+        // Uptime
+        const uptime = await api('/uptime');
+        if (uptime) {
+            document.getElementById('uptime-content').innerHTML = `
+                <div style="font-size: 2rem; font-weight: 700; color: var(--accent-green);">${uptime.uptime_formatted}</div>
+                <div style="color: var(--text-muted); font-size: 0.875rem;">desde ${uptime.boot_formatted}</div>
+            `;
+        }
+
+        // Monitors
+        const monitors = await api('/monitors');
+        if (monitors && monitors.length) {
+            const maxWidth = Math.max(...monitors.map(m => m.resolution.width));
+            const scale = 180 / maxWidth;
+
+            document.getElementById('monitors-container').innerHTML = `
+                <div class="monitors-container">
+                    ${monitors.map(m => {
+                        const w = m.resolution.width * scale;
+                        const h = m.resolution.height * scale;
+                        return `
+                            <div class="monitor ${m.is_main ? 'main' : ''}" style="width: ${w}px;">
+                                ${m.is_main ? '<span class="monitor-badge">★</span>' : ''}
+                                <div class="monitor-screen" style="width: ${w-12}px; height: ${h-12}px; font-size: 0.625rem;">
+                                    ${m.resolution.width}x${m.resolution.height}
+                                </div>
+                                <div class="monitor-stand"></div>
+                                <div class="monitor-label">${m.name.split(' ')[0]}<br><span style="color: var(--text-muted);">${m.refresh_rate}Hz</span></div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        // Quick Links
+        const links = await api('/quick-links');
+        if (links) {
+            document.getElementById('quick-links').innerHTML = links.map(l => `
+                <div class="quick-link" onclick="alert('Abrindo ${l.name}...')">
+                    <div class="quick-link-icon" style="background: var(--bg-hover);">${l.icon === 'terminal' ? '💻' : l.icon === 'code' ? '📝' : l.icon === 'github' ? '🐙' : l.icon === 'bot' ? '🤖' : '📱'}</div>
+                    <div class="quick-link-name">${l.name}</div>
+                    <div class="quick-link-shortcut">${l.shortcut}</div>
+                </div>
+            `).join('');
+        }
+    }
+
+    // Claude Max 20x
+    async function loadClaude() {
+        const data = await api('/claude-usage');
+        if (data) {
+            const pct5h = data.usage.window_5h.percent;
+            const statusClass = pct5h < 50 ? 'healthy' : pct5h < 80 ? 'moderate' : pct5h < 95 ? 'high' : 'critical';
+
+            document.getElementById('claude-stats').innerHTML = `
+                <div class="claude-module">
+                    <div class="claude-header">
+                        <div class="claude-logo">🤖</div>
+                        <div>
+                            <div class="claude-title">${data.plan.name}</div>
+                            <div class="claude-subtitle">$${data.plan.price_usd}/mês = R$ ${data.plan.price_brl.toLocaleString('pt-BR')}/mês</div>
+                        </div>
+                    </div>
+
+                    <div class="claude-stats">
+                        <div class="claude-stat">
+                            <div class="claude-stat-label">Janela 5h</div>
+                            <div class="claude-stat-value">${data.usage.window_5h.messages}</div>
+                            <div class="claude-stat-sub">de ${data.usage.window_5h.limit} msgs</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill ${statusClass}" style="width: ${Math.min(pct5h, 100)}%"></div>
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Reset: ${data.usage.window_5h.next_reset_formatted}</div>
+                        </div>
+
+                        <div class="claude-stat">
+                            <div class="claude-stat-label">Janela 7d</div>
+                            <div class="claude-stat-value">${data.usage.window_7d.messages.toLocaleString()}</div>
+                            <div class="claude-stat-sub">de ${(data.usage.window_7d.limit / 1000).toFixed(0)}K msgs</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill healthy" style="width: ${Math.min(data.usage.window_7d.percent, 100)}%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${data.tips && data.tips.length > 0 ? `
+                        <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(0,0,0,0.2); border-radius: 0.5rem;">
+                            <div style="font-size: 0.75rem; font-weight: 500; color: #f59e0b;">💡 Dica</div>
+                            <div style="font-size: 0.875rem; color: var(--text-secondary);">${data.tips[0].message}</div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+    }
+
+    // Storage
+    async function loadStorage() {
+        const data = await api('/storage/v2');
+        if (data) {
+            const pct = data.percent_used;
+            const statusClass = pct < 70 ? 'healthy' : pct < 85 ? 'moderate' : pct < 95 ? 'high' : 'critical';
+
+            document.getElementById('storage-content').innerHTML = `
+                <div style="display: flex; align-items: center; gap: 2rem; margin-bottom: 1.5rem;">
+                    <div style="flex: 1;">
+                        <div style="font-size: 2.5rem; font-weight: 700;">${data.formatted.used}</div>
+                        <div style="color: var(--text-muted);">de ${data.formatted.total} usado</div>
+                        <div class="progress-bar" style="height: 0.75rem; margin-top: 0.5rem;">
+                            <div class="progress-fill ${statusClass}" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 1.5rem; font-weight: 600; color: var(--accent-green);">${data.formatted.free}</div>
+                        <div style="color: var(--text-muted);">livre</div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 0.5rem;">
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">📱 Apps</div>
+                        <div style="font-size: 1.25rem; font-weight: 600;">${data.categories.apps.toFixed(1)} GB</div>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 0.5rem;">
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">💻 Developer</div>
+                        <div style="font-size: 1.25rem; font-weight: 600;">${data.categories.developer.toFixed(1)} GB</div>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 0.5rem;">
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">☁️ iCloud</div>
+                        <div style="font-size: 1.25rem; font-weight: 600;">${data.categories.icloud.toFixed(1)} GB</div>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 0.5rem;">
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">📷 Photos</div>
+                        <div style="font-size: 1.25rem; font-weight: 600;">${data.categories.photos.toFixed(1)} GB</div>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 0.5rem;">
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">🗂️ Other</div>
+                        <div style="font-size: 1.25rem; font-weight: 600;">${data.categories.other.toFixed(1)} GB</div>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 0.5rem;">
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">⚙️ Sistema</div>
+                        <div style="font-size: 1.25rem; font-weight: 600;">${data.categories.system_data.toFixed(1)} GB</div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    // Network / Speed Test
+    async function loadNetwork() {
+        const data = await api('/speedtest/last');
+        if (data && data.latency_ms) {
+            document.getElementById('ping-value').textContent = data.latency_ms;
+            document.getElementById('download-value').textContent = data.download_mbps;
+            document.getElementById('upload-value').textContent = data.upload_mbps;
+        }
+    }
+
+    document.getElementById('run-speedtest').addEventListener('click', async () => {
+        const btn = document.getElementById('run-speedtest');
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Testing...';
+
+        try {
+            const res = await fetch('/api/speedtest', { method: 'POST' });
+            const data = await res.json();
+            if (data.latency_ms) {
+                document.getElementById('ping-value').textContent = data.latency_ms;
+                document.getElementById('download-value').textContent = data.download_mbps;
+                document.getElementById('upload-value').textContent = data.upload_mbps;
+            }
+        } catch (e) {
+            console.error('Speed test error:', e);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '▶ Run Test';
+        }
+    });
+
+    // Dev Tools
+    async function loadDevTools() {
+        const data = await api('/dev-tools');
+        if (data) {
+            document.getElementById('devtools-content').innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                        <div style="font-size: 2rem;">🐍</div>
+                        <div style="font-size: 0.875rem; font-weight: 600;">Python</div>
+                        <div style="color: var(--text-muted); font-size: 0.875rem;">${data.python}</div>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                        <div style="font-size: 2rem;">📦</div>
+                        <div style="font-size: 0.875rem; font-weight: 600;">Node.js</div>
+                        <div style="color: var(--text-muted); font-size: 0.875rem;">${data.node}</div>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                        <div style="font-size: 2rem;">🍺</div>
+                        <div style="font-size: 0.875rem; font-weight: 600;">Homebrew</div>
+                        <div style="color: var(--text-muted); font-size: 0.875rem;">${data.homebrew}</div>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                        <div style="font-size: 2rem;">🐙</div>
+                        <div style="font-size: 0.875rem; font-weight: 600;">Git</div>
+                        <div style="color: var(--text-muted); font-size: 0.875rem;">${data.git}</div>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                        <div style="font-size: 2rem;">🐳</div>
+                        <div style="font-size: 0.875rem; font-weight: 600;">Docker</div>
+                        <div style="color: var(--text-muted); font-size: 0.875rem;">${data.docker || 'N/A'}</div>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                        <div style="font-size: 2rem;">💻</div>
+                        <div style="font-size: 0.875rem; font-weight: 600;">Shell</div>
+                        <div style="color: var(--text-muted); font-size: 0.875rem;">${data.shell} ${data.shell_version}</div>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                        <div style="font-size: 2rem;">📦</div>
+                        <div style="font-size: 0.875rem; font-weight: 600;">NPM</div>
+                        <div style="color: var(--text-muted); font-size: 0.875rem;">${data.npm}</div>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                        <div style="font-size: 2rem;">🤖</div>
+                        <div style="font-size: 0.875rem; font-weight: 600;">Claude Code</div>
+                        <div style="color: var(--text-muted); font-size: 0.875rem;">${data.claude_code}</div>
+                    </div>
+                </div>
+                <div style="margin-top: 1rem; padding: 0.75rem; background: var(--bg-secondary); border-radius: 0.5rem; text-align: center;">
+                    <span style="color: var(--text-muted);">🍺 Homebrew Packages:</span>
+                    <span style="font-weight: 600; margin-left: 0.5rem;">${data.homebrew_packages}</span>
+                </div>
+            `;
+        }
+    }
+
+    // Initial load
+    loadDashboard();
+    </script>
+</body>
+</html>

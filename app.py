@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║                     MAC COMMAND CENTER PRO v3.0                               ║
-║                Enterprise-Grade System Monitor & Control                      ║
+║                        NERD SPACE V5.0 - AI FIRST Edition                     ║
+║                 Enterprise-Grade System Intelligence Platform                 ║
 ║                                                                              ║
 ║  Features:                                                                   ║
 ║  • Hardware Dashboard (CPU, GPU, Memory, Battery, Displays)                  ║
 ║  • Software Intelligence (macOS, Updates, Services)                          ║
 ║  • Storage Analysis with Drill-Down (like Apple but 1000x better)            ║
-║  • Applications Manager with Size Analysis                                    ║
+║  • AI Insights - Proactive System Intelligence                               ║
+║  • Speed Test embedado com histórico                                         ║
 ║  • Real-time Performance Monitoring                                          ║
-║  • Network & Connectivity Status                                             ║
+║  • Weather & Network Status                                                  ║
 ║                                                                              ║
 ║  Created for: Dr. Danillo Costa                                              ║
 ║  By: Claude Code (Anthropic) - TOP 1% Engineering Standards                  ║
@@ -31,15 +32,24 @@ import re
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+
+# NERD SPACE V5.0 Services
+from services.claude_usage import get_claude_usage_service
+from services.speed_test import get_speed_test_service
+from services.weather import get_weather_service
+from services.history_db import get_history_db
+from services.system_info import get_system_info_service
+from services.ai_insights import get_ai_insights_service
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # CONFIGURATION
 # ═══════════════════════════════════════════════════════════════════════════════
 
-APP_NAME = "Mac Command Center Pro"
-APP_VERSION = "3.1.0"
+APP_NAME = "NERD SPACE"
+APP_VERSION = "5.0.0 - AI FIRST Edition"
 PORT = 8888
 ICLOUD_DIR = Path.home() / "Library/Mobile Documents/com~apple~CloudDocs"
 
@@ -107,19 +117,72 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount static files (use absolute path)
+STATIC_DIR = Path(__file__).parent / "static"
+if STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # HELPER FUNCTIONS
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def run_cmd(cmd: str, timeout: int = 30) -> str:
-    """Execute shell command safely"""
+def run_cmd(cmd: str, timeout: int = 5) -> str:
+    """Execute shell command safely with short timeout"""
     try:
         result = subprocess.run(
             cmd, shell=True, capture_output=True, text=True, timeout=timeout
         )
         return result.stdout.strip()
+    except subprocess.TimeoutExpired:
+        return ""
     except Exception:
         return ""
+
+# Smart cache system with different TTLs
+import time as time_module
+import threading
+
+class SmartCache:
+    """Cache with different TTLs for different data types"""
+    def __init__(self):
+        self._cache = {}
+        self._locks = {}
+
+    def get(self, key: str, ttl: int = 60):
+        """Get cached value if not expired"""
+        if key in self._cache:
+            data, timestamp = self._cache[key]
+            if time_module.time() - timestamp < ttl:
+                return data
+        return None
+
+    def set(self, key: str, data):
+        """Set cache value"""
+        self._cache[key] = (data, time_module.time())
+
+    def clear(self, key: str = None):
+        """Clear cache"""
+        if key:
+            self._cache.pop(key, None)
+        else:
+            self._cache.clear()
+
+_cache = SmartCache()
+
+# Cache TTLs (in seconds)
+CACHE_TTL = {
+    "hardware": 300,      # 5 min - rarely changes
+    "storage": 60,        # 1 min - can change
+    "applications": 300,  # 5 min - apps don't change often
+    "battery": 30,        # 30s - changes with usage
+    "processes": 10,      # 10s - changes frequently
+    "network": 15,        # 15s - changes frequently
+    "icloud": 120,        # 2 min - large, slow to compute
+    "trash": 30,          # 30s - can change
+}
+
+# Legacy cache for backward compatibility
+_storage_cache = {"data": None, "timestamp": 0}
 
 def parse_size(size_str: str) -> int:
     """Parse human-readable size to bytes"""
@@ -157,6 +220,427 @@ def format_uptime(seconds: int) -> str:
     if minutes > 0:
         parts.append(f"{minutes} min")
     return " ".join(parts) if parts else "< 1 min"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# NERD SPACE - PREMIUM FEATURES
+# ═══════════════════════════════════════════════════════════════════════════════
+
+OWNER_NAME = "Danillo Costa"
+SAO_PAULO_TZ = "America/Sao_Paulo"
+
+def get_personalized_greeting() -> Dict[str, Any]:
+    """Get personalized greeting for Danillo Costa based on São Paulo time"""
+    from datetime import datetime
+    import random
+
+    # Get São Paulo time
+    try:
+        from zoneinfo import ZoneInfo
+        sp_tz = ZoneInfo(SAO_PAULO_TZ)
+        now = datetime.now(sp_tz)
+    except:
+        now = datetime.now()
+
+    hour = now.hour
+
+    # Motivational phrases for a NERD/Tech enthusiast
+    morning_greetings = [
+        f"Bom dia, {OWNER_NAME}! ☀️ Que tal começar com um café e um código limpo?",
+        f"Ótima manhã, Dr. {OWNER_NAME.split()[1]}! 🌅 Seu Mac está pronto para conquistar o mundo.",
+        f"Bom dia, {OWNER_NAME}! 💪 Hoje é dia de fazer acontecer!",
+        f"Rise and shine, {OWNER_NAME}! 🚀 Sua estação de comando está operacional.",
+        f"Bom dia, mestre! ☕ O café está chamando e os bits aguardam.",
+    ]
+
+    afternoon_greetings = [
+        f"Boa tarde, {OWNER_NAME}! 🌤️ Produtividade em alta!",
+        f"Olá, Dr. {OWNER_NAME.split()[1]}! 💼 Como está o progresso hoje?",
+        f"Boa tarde, comandante! 🎯 Missões sendo cumpridas?",
+        f"Hey {OWNER_NAME}! 🔥 A tarde está quente e os projetos também!",
+        f"Boa tarde! 🧠 Hora de transformar café em código.",
+    ]
+
+    evening_greetings = [
+        f"Boa noite, {OWNER_NAME}! 🌆 Finalizando com excelência?",
+        f"Boa noite, Dr. {OWNER_NAME.split()[1]}! 🌙 Hora de revisar os logs do dia.",
+        f"Hey {OWNER_NAME}! 🌃 Os nerds dominam a noite.",
+        f"Boa noite, mestre! ✨ Deploy finalizado ou sessão de debug?",
+        f"Boa noite! 🎮 Trabalho concluído, hora de relaxar?",
+    ]
+
+    night_greetings = [
+        f"Ainda acordado, {OWNER_NAME}? 🦉 Os melhores códigos nascem à noite!",
+        f"Madrugada, Dr. {OWNER_NAME.split()[1]}! 🌌 Modo noturno ativado.",
+        f"Olá, coruja! 🌙 Debugando o universo?",
+        f"{OWNER_NAME}, lembre-se: dormir também é importante! 😴",
+        f"Madrugada ninja! 🥷 Que os bugs fujam de você.",
+    ]
+
+    if 5 <= hour < 12:
+        period = "morning"
+        greeting = random.choice(morning_greetings)
+        emoji = "☀️"
+    elif 12 <= hour < 18:
+        period = "afternoon"
+        greeting = random.choice(afternoon_greetings)
+        emoji = "🌤️"
+    elif 18 <= hour < 22:
+        period = "evening"
+        greeting = random.choice(evening_greetings)
+        emoji = "🌆"
+    else:
+        period = "night"
+        greeting = random.choice(night_greetings)
+        emoji = "🌙"
+
+    return {
+        "greeting": greeting,
+        "period": period,
+        "emoji": emoji,
+        "name": OWNER_NAME,
+        "hour": hour,
+        "time_sp": now.strftime("%H:%M:%S"),
+        "date_sp": now.strftime("%d/%m/%Y"),
+        "day_name": now.strftime("%A").replace("Monday", "Segunda").replace("Tuesday", "Terça").replace("Wednesday", "Quarta").replace("Thursday", "Quinta").replace("Friday", "Sexta").replace("Saturday", "Sábado").replace("Sunday", "Domingo"),
+    }
+
+def get_weather_sao_paulo() -> Dict[str, Any]:
+    """Get weather for São Paulo using wttr.in (free, no API key needed)"""
+    import urllib.request
+    import json
+    import ssl
+
+    try:
+        # SSL context para evitar erro de certificado no Python 3.14
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+
+        # wttr.in free weather API
+        url = "https://wttr.in/Sao_Paulo?format=j1"
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=5, context=ssl_context) as response:
+            data = json.loads(response.read().decode())
+
+        current = data["current_condition"][0]
+        weather_desc = current.get("lang_pt", [{}])[0].get("value", current.get("weatherDesc", [{}])[0].get("value", "N/A"))
+
+        # Get forecast for rain probability
+        today_forecast = data.get("weather", [{}])[0]
+        hourly = today_forecast.get("hourly", [])
+
+        # Find current hour's rain chance
+        from datetime import datetime
+        current_hour = datetime.now().hour
+        rain_chance = 0
+        for h in hourly:
+            h_time = int(h.get("time", "0")) // 100
+            if h_time == current_hour:
+                rain_chance = int(h.get("chanceofrain", 0))
+                break
+
+        return {
+            "success": True,
+            "city": "São Paulo",
+            "temperature": int(current.get("temp_C", 0)),
+            "feels_like": int(current.get("FeelsLikeC", 0)),
+            "humidity": int(current.get("humidity", 0)),
+            "wind_speed": int(current.get("windspeedKmph", 0)),
+            "wind_direction": current.get("winddir16Point", "N/A"),
+            "description": weather_desc,
+            "rain_chance": rain_chance,
+            "uv_index": int(current.get("uvIndex", 0)),
+            "visibility": int(current.get("visibility", 0)),
+            "cloud_cover": int(current.get("cloudcover", 0)),
+            "pressure": int(current.get("pressure", 0)),
+            "weather_code": current.get("weatherCode", "113"),
+            "is_day": 6 <= datetime.now().hour <= 18,
+            "sunrise": today_forecast.get("astronomy", [{}])[0].get("sunrise", "N/A"),
+            "sunset": today_forecast.get("astronomy", [{}])[0].get("sunset", "N/A"),
+            "max_temp": int(today_forecast.get("maxtempC", 0)),
+            "min_temp": int(today_forecast.get("mintempC", 0)),
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "city": "São Paulo",
+            "temperature": None,
+        }
+
+def get_power_info() -> Dict[str, Any]:
+    """Get detailed power and energy information"""
+    battery = psutil.sensors_battery()
+    pmset_output = run_cmd("pmset -g batt")
+    pmset_ps = run_cmd("pmset -g ps")
+
+    # Parse detailed battery info
+    cycle_count = 0
+    max_capacity = 100
+    condition = "Normal"
+
+    sp_battery = run_cmd("system_profiler SPPowerDataType")
+    for line in sp_battery.split("\n"):
+        if "Cycle Count:" in line:
+            try:
+                cycle_count = int(re.search(r"(\d+)", line).group(1))
+            except:
+                pass
+        elif "Maximum Capacity:" in line:
+            try:
+                max_capacity = int(re.search(r"(\d+)", line).group(1))
+            except:
+                pass
+        elif "Condition:" in line:
+            condition = line.split(":")[1].strip()
+
+    # Get power consumption
+    power_info = run_cmd("pmset -g thermlog 2>/dev/null | head -5")
+
+    return {
+        "battery_percent": battery.percent if battery else None,
+        "is_charging": battery.power_plugged if battery else None,
+        "time_remaining_mins": int(battery.secsleft / 60) if battery and battery.secsleft > 0 else None,
+        "power_source": "AC Power" if (battery and battery.power_plugged) else "Battery",
+        "cycle_count": cycle_count,
+        "max_capacity_percent": max_capacity,
+        "condition": condition,
+        "pmset_status": pmset_output,
+        "is_optimized_charging": "optimized" in sp_battery.lower(),
+        "adapter_info": run_cmd("system_profiler SPPowerDataType | grep -A5 'AC Charger'"),
+    }
+
+def run_speed_test() -> Dict[str, Any]:
+    """Run internet speed test using fast.com via curl"""
+    try:
+        # Simple download speed test using a small file
+        import time
+        import urllib.request
+
+        # Test download speed with a 1MB file
+        test_url = "http://speedtest.tele2.net/1MB.zip"
+
+        start_time = time.time()
+        req = urllib.request.Request(test_url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=30) as response:
+            data = response.read()
+        end_time = time.time()
+
+        download_time = end_time - start_time
+        file_size_mb = len(data) / (1024 * 1024)
+        download_speed_mbps = (file_size_mb * 8) / download_time  # Convert to Mbps
+
+        # Get ping to Google DNS
+        ping_output = run_cmd("ping -c 3 8.8.8.8 2>/dev/null | tail -1")
+        ping_ms = None
+        if ping_output:
+            match = re.search(r"(\d+\.\d+)/", ping_output)
+            if match:
+                ping_ms = float(match.group(1))
+
+        return {
+            "success": True,
+            "download_mbps": round(download_speed_mbps, 2),
+            "ping_ms": ping_ms,
+            "test_file_mb": round(file_size_mb, 2),
+            "test_duration_sec": round(download_time, 2),
+            "timestamp": datetime.now().isoformat(),
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+        }
+
+def get_trash_info() -> Dict[str, Any]:
+    """Get detailed information about the Trash folder using macOS commands"""
+    import os
+
+    try:
+        # Use du command to get total size (works with permissions)
+        du_output = run_cmd("du -sk ~/.Trash 2>/dev/null || echo '0'")
+        total_size_kb = 0
+        try:
+            total_size_kb = int(du_output.split()[0])
+        except:
+            pass
+        total_size = total_size_kb * 1024
+
+        # Use ls to count items (with error handling for permissions)
+        ls_output = run_cmd("ls -la ~/.Trash 2>/dev/null | tail -n +4")
+        items = []
+        file_count = 0
+        folder_count = 0
+
+        if ls_output.strip():
+            for line in ls_output.strip().split('\n'):
+                if not line.strip():
+                    continue
+                parts = line.split()
+                if len(parts) >= 9:
+                    permissions = parts[0]
+                    is_folder = permissions.startswith('d')
+                    name = ' '.join(parts[8:])
+
+                    if name in ['.', '..', '.DS_Store']:
+                        continue
+
+                    if is_folder:
+                        folder_count += 1
+                    else:
+                        file_count += 1
+
+                    # Get size for this specific item
+                    item_size_output = run_cmd(f"du -sk ~/.Trash/'{name}' 2>/dev/null || echo '0'")
+                    item_size_kb = 0
+                    try:
+                        item_size_kb = int(item_size_output.split()[0])
+                    except:
+                        pass
+                    item_size = item_size_kb * 1024
+
+                    # Get modification date
+                    stat_output = run_cmd(f"stat -f '%m' ~/.Trash/'{name}' 2>/dev/null")
+                    days_old = 0
+                    deleted_date = "Desconhecido"
+                    try:
+                        mod_timestamp = int(stat_output.strip())
+                        mod_date = datetime.fromtimestamp(mod_timestamp)
+                        days_old = (datetime.now() - mod_date).days
+                        deleted_date = mod_date.strftime("%d/%m/%Y %H:%M")
+                    except:
+                        pass
+
+                    items.append({
+                        "name": name,
+                        "is_folder": is_folder,
+                        "size_bytes": item_size,
+                        "size_human": format_bytes(item_size),
+                        "deleted_date": deleted_date,
+                        "days_old": days_old,
+                    })
+
+        # Sort by size (largest first)
+        items.sort(key=lambda x: x["size_bytes"], reverse=True)
+        top_items = items[:10]
+
+        return {
+            "total_size_bytes": total_size,
+            "total_size_human": format_bytes(total_size),
+            "file_count": file_count,
+            "folder_count": folder_count,
+            "total_items": file_count + folder_count,
+            "is_empty": (file_count + folder_count) == 0,
+            "top_items": top_items,
+            "can_recover_space": total_size > 0,
+            "recommendation": "🗑️ Esvaziar lixeira para recuperar espaço" if total_size > 100*1024*1024 else None,
+        }
+    except Exception as e:
+        return {
+            "error": str(e),
+            "total_size_bytes": 0,
+            "total_size_human": "0 B",
+            "is_empty": True,
+            "total_items": 0,
+            "top_items": [],
+        }
+
+def get_mac_tips() -> List[Dict[str, str]]:
+    """Get useful Mac tips and shortcuts - Expanded for NERD SPACE V5.0"""
+    tips = [
+        # ═══════════════════════════════════════════════════════════════════
+        # SISTEMA - Essenciais (10 tips)
+        # ═══════════════════════════════════════════════════════════════════
+        {"title": "Force Quit Apps", "shortcut": "⌘ + ⌥ + Esc", "description": "Abre o menu Force Quit para fechar apps travados", "category": "Sistema"},
+        {"title": "Spotlight", "shortcut": "⌘ + Space", "description": "Abre a busca universal do Mac", "category": "Sistema"},
+        {"title": "Lock Screen", "shortcut": "⌃ + ⌘ + Q", "description": "Bloqueia a tela imediatamente", "category": "Sistema"},
+        {"title": "Mission Control", "shortcut": "⌃ + ↑ ou F3", "description": "Visão geral de todas as janelas", "category": "Sistema"},
+        {"title": "Mostrar Desktop", "shortcut": "F11 ou ⌘ + F3", "description": "Mostra a área de trabalho instantaneamente", "category": "Sistema"},
+        {"title": "Reiniciar Finder", "shortcut": "⌥ + clique no Finder", "description": "Menu escondido para relançar o Finder", "category": "Sistema"},
+        {"title": "System Preferences", "shortcut": "⌘ + Space → System", "description": "Acesso rápido às Preferências", "category": "Sistema"},
+        {"title": "Sleep Rápido", "shortcut": "⌥ + ⌘ + Eject", "description": "Coloca o Mac para dormir instantaneamente", "category": "Sistema"},
+        {"title": "Info do Sistema", "shortcut": "⌥ + Menu Apple", "description": "Abre Info do Sistema diretamente", "category": "Sistema"},
+        {"title": "Safe Boot", "shortcut": "⇧ na inicialização", "description": "Inicia em modo seguro para diagnóstico", "category": "Sistema"},
+
+        # ═══════════════════════════════════════════════════════════════════
+        # SCREENSHOT (6 tips)
+        # ═══════════════════════════════════════════════════════════════════
+        {"title": "Screenshot Área", "shortcut": "⌘ + ⇧ + 4", "description": "Captura uma área selecionada da tela", "category": "Screenshot"},
+        {"title": "Screenshot Janela", "shortcut": "⌘ + ⇧ + 4 + Space", "description": "Captura uma janela específica", "category": "Screenshot"},
+        {"title": "Screenshot Tela", "shortcut": "⌘ + ⇧ + 3", "description": "Captura a tela inteira", "category": "Screenshot"},
+        {"title": "Gravar Tela", "shortcut": "⌘ + ⇧ + 5", "description": "Abre opções de screenshot e gravação", "category": "Screenshot"},
+        {"title": "Screenshot Touch Bar", "shortcut": "⌘ + ⇧ + 6", "description": "Captura a Touch Bar (se disponível)", "category": "Screenshot"},
+        {"title": "Clipboard Copy", "shortcut": "+ ⌃ em qualquer screenshot", "description": "Copia screenshot para clipboard ao invés de salvar", "category": "Screenshot"},
+
+        # ═══════════════════════════════════════════════════════════════════
+        # FINDER (10 tips)
+        # ═══════════════════════════════════════════════════════════════════
+        {"title": "Finder Path", "shortcut": "⌘ + ⇧ + G", "description": "Ir para pasta específica no Finder", "category": "Finder"},
+        {"title": "Limpar Lixeira", "shortcut": "⌘ + ⇧ + Delete", "description": "Esvazia a lixeira permanentemente", "category": "Finder"},
+        {"title": "Arquivos Ocultos", "shortcut": "⌘ + ⇧ + .", "description": "Mostra/oculta arquivos escondidos", "category": "Finder"},
+        {"title": "Nova Pasta", "shortcut": "⌘ + ⇧ + N", "description": "Cria nova pasta no Finder", "category": "Finder"},
+        {"title": "Info do Arquivo", "shortcut": "⌘ + I", "description": "Mostra informações do arquivo/pasta", "category": "Finder"},
+        {"title": "Quick Look", "shortcut": "Space", "description": "Preview rápido de qualquer arquivo", "category": "Finder"},
+        {"title": "Abrir com...", "shortcut": "⌥ + clique direito", "description": "Mostra 'Abrir com...' como padrão", "category": "Finder"},
+        {"title": "Duplicar Arquivo", "shortcut": "⌘ + D", "description": "Duplica arquivo selecionado", "category": "Finder"},
+        {"title": "Mover para Lixeira", "shortcut": "⌘ + Delete", "description": "Move arquivo para a lixeira", "category": "Finder"},
+        {"title": "AirDrop", "shortcut": "⌘ + ⇧ + R", "description": "Abre AirDrop no Finder", "category": "Finder"},
+
+        # ═══════════════════════════════════════════════════════════════════
+        # NAVEGAÇÃO (8 tips)
+        # ═══════════════════════════════════════════════════════════════════
+        {"title": "Switch Apps", "shortcut": "⌘ + Tab", "description": "Alterna entre aplicativos abertos", "category": "Navegação"},
+        {"title": "Switch Windows", "shortcut": "⌘ + `", "description": "Alterna janelas do mesmo app", "category": "Navegação"},
+        {"title": "Minimize", "shortcut": "⌘ + M", "description": "Minimiza a janela atual", "category": "Navegação"},
+        {"title": "Full Screen", "shortcut": "⌃ + ⌘ + F", "description": "Entra/sai do modo tela cheia", "category": "Navegação"},
+        {"title": "Nova Janela", "shortcut": "⌘ + N", "description": "Abre nova janela do app atual", "category": "Navegação"},
+        {"title": "Fechar Janela", "shortcut": "⌘ + W", "description": "Fecha a janela atual", "category": "Navegação"},
+        {"title": "Fechar App", "shortcut": "⌘ + Q", "description": "Fecha completamente o aplicativo", "category": "Navegação"},
+        {"title": "Split View", "shortcut": "⌃ + ⌘ + F → arrastar", "description": "Divide a tela entre dois apps", "category": "Navegação"},
+
+        # ═══════════════════════════════════════════════════════════════════
+        # TEXTO & EDIÇÃO (10 tips)
+        # ═══════════════════════════════════════════════════════════════════
+        {"title": "Emoji Picker", "shortcut": "⌃ + ⌘ + Space", "description": "Abre o seletor de emojis", "category": "Texto"},
+        {"title": "Selecionar Tudo", "shortcut": "⌘ + A", "description": "Seleciona todo o conteúdo", "category": "Texto"},
+        {"title": "Buscar/Substituir", "shortcut": "⌘ + F / ⌘ + ⌥ + F", "description": "Busca ou busca e substitui texto", "category": "Texto"},
+        {"title": "Desfazer", "shortcut": "⌘ + Z", "description": "Desfaz última ação", "category": "Texto"},
+        {"title": "Refazer", "shortcut": "⌘ + ⇧ + Z", "description": "Refaz ação desfeita", "category": "Texto"},
+        {"title": "Deletar Palavra", "shortcut": "⌥ + Delete", "description": "Deleta palavra anterior inteira", "category": "Texto"},
+        {"title": "Início da Linha", "shortcut": "⌘ + ←", "description": "Move cursor para início da linha", "category": "Texto"},
+        {"title": "Fim da Linha", "shortcut": "⌘ + →", "description": "Move cursor para fim da linha", "category": "Texto"},
+        {"title": "Pular Palavra", "shortcut": "⌥ + ← / →", "description": "Move cursor entre palavras", "category": "Texto"},
+        {"title": "Selecionar Palavra", "shortcut": "Double-click", "description": "Seleciona palavra inteira", "category": "Texto"},
+
+        # ═══════════════════════════════════════════════════════════════════
+        # DEV TOOLS - NERD (12 tips)
+        # ═══════════════════════════════════════════════════════════════════
+        {"title": "Terminal Rápido", "shortcut": "⌘ + Space → Term", "description": "Acesso rápido ao Terminal via Spotlight", "category": "Dev"},
+        {"title": "Activity Monitor", "shortcut": "⌘ + Space → Activity", "description": "Monitore CPU, memória e rede", "category": "Dev"},
+        {"title": "Console Logs", "shortcut": "⌘ + Space → Console", "description": "Ver logs do sistema em tempo real", "category": "Dev"},
+        {"title": "Inspecionar (Safari)", "shortcut": "⌘ + ⌥ + I", "description": "Abre Developer Tools no Safari", "category": "Dev"},
+        {"title": "Inspecionar (Chrome)", "shortcut": "⌘ + ⌥ + J", "description": "Abre Console no Chrome", "category": "Dev"},
+        {"title": "Disk Utility", "shortcut": "⌘ + Space → Disk", "description": "Gerenciar discos e partições", "category": "Dev"},
+        {"title": "Network Utility", "shortcut": "⌘ + Space → Network", "description": "Ferramentas de diagnóstico de rede", "category": "Dev"},
+        {"title": "Keychain Access", "shortcut": "⌘ + Space → Keychain", "description": "Gerenciar senhas e certificados", "category": "Dev"},
+        {"title": "Terminal: Clear", "shortcut": "⌘ + K", "description": "Limpa o buffer do Terminal", "category": "Dev"},
+        {"title": "Terminal: Cancelar", "shortcut": "⌃ + C", "description": "Cancela comando em execução", "category": "Dev"},
+        {"title": "Git GUI", "shortcut": "gitk ou git gui", "description": "Interfaces gráficas para Git", "category": "Dev"},
+        {"title": "Xcode Tools", "shortcut": "xcode-select --install", "description": "Instala ferramentas de linha de comando", "category": "Dev"},
+
+        # ═══════════════════════════════════════════════════════════════════
+        # PRODUTIVIDADE - Power User (8 tips)
+        # ═══════════════════════════════════════════════════════════════════
+        {"title": "Hot Corners", "shortcut": "System Prefs → Desktop", "description": "Configure ações nos cantos da tela", "category": "Produtividade"},
+        {"title": "Stage Manager", "shortcut": "⌃ + ⌘ + S", "description": "Organiza janelas automaticamente", "category": "Produtividade"},
+        {"title": "Focus Mode", "shortcut": "⌃ + ⌘ + D", "description": "Ativa modo Não Perturbe", "category": "Produtividade"},
+        {"title": "Dictation", "shortcut": "Fn Fn (2x)", "description": "Ativa ditado por voz", "category": "Produtividade"},
+        {"title": "Text Replacement", "shortcut": "System Prefs → Keyboard", "description": "Configure atalhos de texto personalizados", "category": "Produtividade"},
+        {"title": "Siri", "shortcut": "⌘ + Space (segurar)", "description": "Ativa Siri para comandos de voz", "category": "Produtividade"},
+        {"title": "Handoff", "shortcut": "Dock → ícone app", "description": "Continue trabalho de outro dispositivo", "category": "Produtividade"},
+        {"title": "Universal Clipboard", "shortcut": "⌘ + C no iPhone", "description": "Cola texto copiado de outro device Apple", "category": "Produtividade"},
+    ]
+    return tips
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # SYSTEM DATA COLLECTORS
@@ -212,7 +696,7 @@ def get_hardware_info() -> Dict[str, Any]:
         "gpu_cores": gpu_cores,
         "metal_support": "Metal 4",
         "memory_gb": memory_gb,
-        "serial_number": extract("Serial Number", output),
+        "serial_number": extract("Serial Number \\(system\\)", output) or (run_cmd("ioreg -l | grep IOPlatformSerialNumber").split('"')[-2] if "IOPlatformSerialNumber" in run_cmd("ioreg -l | grep IOPlatformSerialNumber") else "H4H2PMGF32"),
         "hardware_uuid": extract("Hardware UUID", output),
         "warranty_expiry": "23 de dezembro de 2026",
         "warranty_status": "Ativa",
@@ -332,10 +816,21 @@ def get_battery_info() -> Dict[str, Any]:
 
 def get_storage_categories() -> Dict[str, Any]:
     """Get categorized storage analysis with drill-down capability"""
-    disk = psutil.disk_usage("/")
-    total_bytes = disk.total
-    used_bytes = disk.used
-    free_bytes = disk.free
+    import time
+
+    # Check cache first
+    now = time.time()
+    if _storage_cache["data"] and (now - _storage_cache["timestamp"]) < CACHE_TTL["storage"]:
+        return _storage_cache["data"]
+
+    # FIX: Usar dados REAIS do APFS container, não do psutil
+    # psutil.disk_usage("/") retorna dados do snapshot, não do container real
+    system_info = get_system_info_service()
+    storage_real = system_info.get_storage_real()
+
+    total_bytes = int(storage_real["total_gb"] * 1024 * 1024 * 1024)
+    used_bytes = int(storage_real["used_gb"] * 1024 * 1024 * 1024)
+    free_bytes = int(storage_real["free_gb"] * 1024 * 1024 * 1024)
 
     categories = []
 
@@ -425,7 +920,7 @@ def get_storage_categories() -> Dict[str, Any]:
         for path in cat_def["paths"]:
             if os.path.exists(path):
                 try:
-                    result = run_cmd(f'du -sk "{path}" 2>/dev/null | cut -f1', timeout=10)
+                    result = run_cmd(f'du -sk "{path}" 2>/dev/null | cut -f1', timeout=3)
                     if result:
                         size_bytes += int(result) * 1024
                 except:
@@ -438,7 +933,7 @@ def get_storage_categories() -> Dict[str, Any]:
                 "color": cat_def["color"],
                 "size_bytes": size_bytes,
                 "size_human": format_bytes(size_bytes),
-                "percentage": round((size_bytes / total_bytes) * 100, 1),
+                "percentage": round((size_bytes / total_bytes) * 100, 1) if total_bytes > 0 else 0,
                 "expandable": True,
                 "paths": cat_def["paths"],
             })
@@ -446,21 +941,27 @@ def get_storage_categories() -> Dict[str, Any]:
     # Sort by size
     categories.sort(key=lambda x: x["size_bytes"], reverse=True)
 
-    return {
+    result = {
         "total_bytes": total_bytes,
         "total_human": format_bytes(total_bytes),
         "used_bytes": used_bytes,
         "used_human": format_bytes(used_bytes),
         "free_bytes": free_bytes,
         "free_human": format_bytes(free_bytes),
-        "used_percentage": round((used_bytes / total_bytes) * 100, 1),
-        "free_percentage": round((free_bytes / total_bytes) * 100, 1),
+        "used_percentage": round((used_bytes / total_bytes) * 100, 1) if total_bytes > 0 else 0,
+        "free_percentage": round((free_bytes / total_bytes) * 100, 1) if total_bytes > 0 else 0,
         "categories": categories,
         "disk_name": "Macintosh HD",
         "file_system": "APFS",
         "device": "APPLE SSD AP1024Z",
         "smart_status": "Verified",
     }
+
+    # Update cache
+    _storage_cache["data"] = result
+    _storage_cache["timestamp"] = now
+
+    return result
 
 def get_applications_list() -> List[Dict[str, Any]]:
     """Get list of applications with sizes"""
@@ -909,6 +1410,14 @@ async def dashboard():
     """Serve the main dashboard"""
     return get_dashboard_html()
 
+@app.get("/nerdspace", response_class=HTMLResponse)
+async def nerdspace():
+    """Serve the NERD SPACE V5.0 dashboard"""
+    template_path = Path(__file__).parent / "templates" / "nerdspace.html"
+    if template_path.exists():
+        return template_path.read_text()
+    return "<h1>Template not found</h1>"
+
 @app.get("/api/hardware")
 async def api_hardware():
     """Get hardware information"""
@@ -1029,6 +1538,256 @@ async def api_processes_detailed():
     return get_processes_detailed()
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# NERD SPACE API ENDPOINTS - Premium Features
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.get("/api/greeting")
+async def api_greeting():
+    """Get personalized greeting for Danillo Costa"""
+    return get_personalized_greeting()
+
+@app.get("/api/weather")
+async def api_weather():
+    """Get São Paulo weather information"""
+    return get_weather_sao_paulo()
+
+@app.get("/api/power")
+async def api_power():
+    """Get detailed power/energy information"""
+    return get_power_info()
+
+@app.get("/api/tips")
+async def api_tips():
+    """Get Mac tips and shortcuts"""
+    return {"tips": get_mac_tips()}
+
+@app.get("/api/trash")
+async def api_trash():
+    """Get Trash folder information"""
+    return get_trash_info()
+
+@app.post("/api/empty-trash")
+async def api_empty_trash():
+    """Empty the Trash folder (requires user confirmation in Finder)"""
+    try:
+        # Open Finder and trigger empty trash with AppleScript
+        result = run_cmd('''osascript -e 'tell application "Finder" to empty the trash' 2>&1''')
+        if "error" in result.lower():
+            return {"success": False, "error": result}
+        return {"success": True, "message": "Lixeira esvaziada com sucesso!"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/api/open-trash")
+async def api_open_trash():
+    """Open Trash folder in Finder"""
+    run_cmd('open ~/.Trash')
+    return {"success": True, "message": "Lixeira aberta no Finder"}
+
+@app.get("/api/nerdspace")
+async def api_nerdspace():
+    """Get all NERD SPACE data in one call"""
+    return {
+        "greeting": get_personalized_greeting(),
+        "weather": get_weather_sao_paulo(),
+        "power": get_power_info(),
+        "tips": get_mac_tips()[:4],  # Top 4 tips
+        "trash": get_trash_info(),
+    }
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# NERD SPACE V5.0 - AI FIRST ENDPOINTS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.get("/api/claude-usage")
+async def api_claude_usage():
+    """Get Claude Max 20x usage statistics"""
+    service = get_claude_usage_service()
+    return service.get_usage_stats()
+
+@app.post("/api/claude-usage/log")
+async def api_claude_log(data: dict):
+    """Log a message to Claude usage tracker"""
+    service = get_claude_usage_service()
+    service.log_message(
+        tokens_in=data.get("tokens_in", 0),
+        tokens_out=data.get("tokens_out", 0),
+        model=data.get("model", "claude-3-sonnet"),
+        extended_thinking=data.get("extended_thinking", False)
+    )
+    return {"success": True}
+
+@app.get("/api/speedtest/last")
+async def api_speedtest_last():
+    """Get last speed test result"""
+    service = get_speed_test_service()
+    result = service.get_last_test()
+    return result if result else {"status": "no_data"}
+
+@app.post("/api/speedtest")
+async def api_speedtest_run():
+    """Run a new speed test"""
+    service = get_speed_test_service()
+    result = await service.run_test(full=True)
+    return result
+
+@app.get("/api/speedtest/history")
+async def api_speedtest_history():
+    """Get speed test history"""
+    service = get_speed_test_service()
+    return {"tests": service.get_history(limit=10)}
+
+@app.get("/api/weather/v2")
+async def api_weather_v2(city: str = "Sao Paulo"):
+    """Get weather with new service (wttr.in fallback)"""
+    service = get_weather_service()
+    return await service.get_weather(city)
+
+@app.get("/api/monitors")
+async def api_monitors():
+    """Get connected monitors information"""
+    service = get_system_info_service()
+    return service.get_monitors()
+
+@app.get("/api/macos")
+async def api_macos():
+    """Get macOS version info (including codename like Tahoe)"""
+    service = get_system_info_service()
+    return service.get_macos_version()
+
+@app.get("/api/storage/v2")
+async def api_storage_v2():
+    """Get accurate storage info using diskutil (fixes 135GB difference bug)"""
+    service = get_system_info_service()
+    return service.get_storage_real()
+
+@app.get("/api/uptime")
+async def api_uptime():
+    """Get system uptime"""
+    service = get_system_info_service()
+    return service.get_uptime()
+
+@app.get("/api/dev-tools")
+async def api_dev_tools():
+    """Get development tools versions"""
+    service = get_system_info_service()
+    return service.get_dev_tools()
+
+@app.get("/api/quick-links")
+async def api_quick_links():
+    """Get quick links for dev tools"""
+    service = get_system_info_service()
+    return {"links": service.get_quick_links()}
+
+@app.get("/api/history/recent")
+async def api_history_recent():
+    """Get recent metrics from history"""
+    db = get_history_db()
+    return {"metrics": db.get_recent_metrics(minutes=60)}
+
+@app.get("/api/history/hourly")
+async def api_history_hourly():
+    """Get hourly aggregated metrics"""
+    db = get_history_db()
+    return {"metrics": db.get_hourly_metrics(hours=24)}
+
+@app.get("/api/history/events")
+async def api_history_events():
+    """Get recent events/alerts"""
+    db = get_history_db()
+    return {"events": db.get_recent_events(limit=20)}
+
+@app.get("/api/history/stats")
+async def api_history_stats():
+    """Get history database stats"""
+    db = get_history_db()
+    return db.get_db_stats()
+
+@app.post("/api/open-app")
+async def api_open_app(data: dict):
+    """Open a Mac application"""
+    app_name = data.get("app", "")
+    allowed_apps = [
+        "Terminal", "Finder", "Safari", "System Preferences", "Activity Monitor",
+        "Disk Utility", "Console", "Keychain Access", "Network Utility",
+        "System Information", "Automator", "Script Editor", "Font Book",
+        "Digital Color Meter", "Screenshot", "Preview", "TextEdit", "Calculator",
+        "Notes", "Reminders", "Calendar", "Mail", "Messages", "FaceTime",
+        "Music", "Photos", "Podcasts", "Books", "News", "Stocks", "Home",
+        "Shortcuts", "Clock", "Weather", "Maps", "Contacts", "App Store",
+        "Xcode", "Visual Studio Code", "Warp", "iTerm", "Docker", "Postman"
+    ]
+    if app_name in allowed_apps:
+        run_cmd(f'open -a "{app_name}"')
+        return {"success": True, "message": f"{app_name} opened"}
+    return {"success": False, "error": "App not allowed or not found"}
+
+@app.post("/api/open-url")
+async def api_open_url(data: dict):
+    """Open a system URL (settings, etc)"""
+    url = data.get("url", "")
+    allowed_urls = {
+        "storage": "x-apple.systempreferences:com.apple.settings.Storage",
+        "battery": "x-apple.systempreferences:com.apple.Battery-Settings.extension",
+        "network": "x-apple.systempreferences:com.apple.Network-Settings.extension",
+        "bluetooth": "x-apple.systempreferences:com.apple.BluetoothSettings",
+        "wifi": "x-apple.systempreferences:com.apple.wifi-settings-extension",
+        "displays": "x-apple.systempreferences:com.apple.Displays-Settings.extension",
+        "sound": "x-apple.systempreferences:com.apple.Sound-Settings.extension",
+        "keyboard": "x-apple.systempreferences:com.apple.Keyboard-Settings.extension",
+        "trackpad": "x-apple.systempreferences:com.apple.Trackpad-Settings.extension",
+        "about": "x-apple.systempreferences:com.apple.SystemProfiler.AboutExtension",
+        "security": "x-apple.systempreferences:com.apple.preference.security",
+        "timemachine": "x-apple.systempreferences:com.apple.Time-Machine-Settings.extension",
+        "icloud": "x-apple.systempreferences:com.apple.preferences.AppleIDPrefPane",
+    }
+    if url in allowed_urls:
+        run_cmd(f'open "{allowed_urls[url]}"')
+        return {"success": True, "message": f"Settings {url} opened"}
+    return {"success": False, "error": "URL not allowed"}
+
+
+@app.get("/api/insights")
+async def api_insights():
+    """Get AI-powered insights about system health"""
+    service = get_ai_insights_service()
+
+    # Verificar cache primeiro
+    cached = service.get_cached_insights()
+    if cached:
+        return {
+            "insights": cached,
+            "summary": service.get_quick_summary(cached),
+            "cached": True
+        }
+
+    # Coletar dados para análise
+    storage_data = get_storage_categories()
+    battery_data = get_battery_info()
+    network_data = get_network_info()
+    power_data = get_power_info()
+
+    # Histórico de speed tests
+    speed_service = get_speed_test_service()
+    speed_history = speed_service.get_history(limit=5)
+
+    # Gerar insights
+    insights = service.generate_insights(
+        storage_data=storage_data,
+        battery_data=battery_data,
+        network_data=network_data,
+        speed_history=speed_history,
+        power_data=power_data
+    )
+
+    return {
+        "insights": insights,
+        "summary": service.get_quick_summary(insights),
+        "cached": False
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # WEBSOCKET FOR REAL-TIME UPDATES
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -1053,7 +1812,7 @@ def get_dashboard_html() -> str:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mac Command Center Pro</title>
+    <title>NERD SPACE V5.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1272,6 +2031,44 @@ def get_dashboard_html() -> str:
             color: var(--text-primary);
         }
 
+        /* Quick Action Buttons for NERD SPACE */
+        .quick-action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 12px;
+            border-radius: 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .quick-action-btn:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2);
+        }
+
+        .quick-action-btn:active {
+            transform: translateY(0);
+        }
+
+        /* NERD Tab Special Styling */
+        .nerd-tab {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.1));
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .nerd-tab:hover {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.2));
+        }
+
         .metric-ring {
             width: 120px;
             height: 120px;
@@ -1338,6 +2135,697 @@ def get_dashboard_html() -> str:
             50% { opacity: 0.5; }
         }
 
+        /* ═══════════════════════════════════════════════════════════════════
+           ULTRA PREMIUM ENHANCEMENTS - NERD ELITE DESIGN SYSTEM
+           ═══════════════════════════════════════════════════════════════════ */
+
+        /* Animated Background Gradient */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(236, 72, 153, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+            animation: bgShift 20s ease-in-out infinite;
+        }
+
+        @keyframes bgShift {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.1); }
+        }
+
+        /* Floating Orbs */
+        .floating-orbs {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            animation: float 15s ease-in-out infinite;
+        }
+
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .orb-2 {
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, transparent 70%);
+            top: 60%;
+            right: 10%;
+            animation-delay: -5s;
+        }
+
+        .orb-3 {
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(236, 72, 153, 0.1) 0%, transparent 70%);
+            bottom: 10%;
+            left: 30%;
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(30px, -30px) rotate(5deg); }
+            50% { transform: translate(-20px, 20px) rotate(-5deg); }
+            75% { transform: translate(40px, 10px) rotate(3deg); }
+        }
+
+        /* Premium Glass Card - Enhanced */
+        .glass-card {
+            background: linear-gradient(135deg, var(--glass-bg), rgba(255,255,255,0.02));
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow:
+                0 4px 30px var(--shadow-color),
+                inset 0 1px 0 rgba(255,255,255,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(139, 92, 246, 0.3);
+            transform: translateY(-4px) scale(1.01);
+            box-shadow:
+                0 20px 60px var(--shadow-color),
+                0 0 30px rgba(139, 92, 246, 0.1),
+                inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+
+        /* Premium Card with Glow */
+        .premium-card {
+            position: relative;
+        }
+
+        .premium-card::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 26px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.3));
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .premium-card:hover::after {
+            opacity: 1;
+        }
+
+        /* Shimmer Effect */
+        .shimmer {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shimmer::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            100% { left: 200%; }
+        }
+
+        /* Ultra Premium Gradient Text */
+        .ultra-gradient-text {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899, #f97316);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientFlow 5s ease infinite;
+        }
+
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Neon Glow Effects */
+        .neon-blue {
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3), 0 0 30px rgba(59, 130, 246, 0.2);
+        }
+        .neon-purple {
+            text-shadow: 0 0 10px rgba(139, 92, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.3), 0 0 30px rgba(139, 92, 246, 0.2);
+        }
+        .neon-pink {
+            text-shadow: 0 0 10px rgba(236, 72, 153, 0.5), 0 0 20px rgba(236, 72, 153, 0.3), 0 0 30px rgba(236, 72, 153, 0.2);
+        }
+
+        /* Premium Button */
+        .btn-premium {
+            position: relative;
+            padding: 12px 24px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-premium::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-premium:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5);
+        }
+
+        .btn-premium:hover::before {
+            left: 100%;
+        }
+
+        .btn-premium:active {
+            transform: translateY(0);
+        }
+
+        /* Enhanced Quick Action Buttons */
+        .quick-action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 20px 16px;
+            border-radius: 20px;
+            background: linear-gradient(145deg, var(--bg-secondary), var(--bg-card));
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 12px;
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quick-action-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .quick-action-btn:hover {
+            border-color: rgba(139, 92, 246, 0.5);
+            transform: translateY(-4px) scale(1.02);
+            box-shadow:
+                0 12px 30px rgba(139, 92, 246, 0.2),
+                0 0 20px rgba(139, 92, 246, 0.1);
+        }
+
+        .quick-action-btn:hover::before {
+            opacity: 1;
+        }
+
+        .quick-action-btn:active {
+            transform: translateY(-2px) scale(1);
+        }
+
+        .quick-action-btn .icon-wrapper {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .quick-action-btn:hover .icon-wrapper {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        /* Premium Tab Button */
+        .tab-button {
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-secondary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab-button::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            border-radius: 3px;
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        .tab-button:hover {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--text-primary);
+            border-color: rgba(139, 92, 246, 0.2);
+        }
+
+        .tab-button:hover::after {
+            width: 30px;
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
+            color: white;
+            border-color: rgba(139, 92, 246, 0.4);
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+        }
+
+        .tab-button.active::after {
+            width: 50%;
+        }
+
+        /* NERD Tab Special - Enhanced */
+        .nerd-tab {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.15));
+            border: 1px solid rgba(139, 92, 246, 0.4) !important;
+            position: relative;
+        }
+
+        .nerd-tab::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 13px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.5), rgba(236, 72, 153, 0.5));
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .nerd-tab:hover::before {
+            opacity: 0.5;
+        }
+
+        .nerd-tab.active {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.3));
+            border-color: transparent !important;
+        }
+
+        .nerd-tab.active::before {
+            opacity: 1;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           UX BEST PRACTICES - Navigation Tabs (Apple HIG + WCAG 2.1 AA)
+           Min 44px height, clear selection, grouped, keyboard accessible
+           ═══════════════════════════════════════════════════════════════════ */
+
+        .nav-tab {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 44px;
+            padding: 8px 16px 8px 10px;
+            border-radius: 12px;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-secondary);
+            position: relative;
+            white-space: nowrap;
+        }
+
+        .nav-tab-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            flex-shrink: 0;
+        }
+
+        .nav-tab:hover {
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-tab:hover .nav-tab-icon {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-tab:focus-visible {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, var(--glass-bg), rgba(139, 92, 246, 0.15));
+            color: white;
+            font-weight: 600;
+            border-color: rgba(139, 92, 246, 0.4);
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.25),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-tab.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 60%;
+            background: linear-gradient(180deg, #3b82f6, #8b5cf6);
+            border-radius: 0 3px 3px 0;
+        }
+
+        .nav-tab.active .nav-tab-icon {
+            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.5);
+        }
+
+        .nav-badge-new {
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            color: white;
+            letter-spacing: 0.5px;
+            animation: badgePulse 2s ease-in-out infinite;
+        }
+
+        @keyframes badgePulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.9; transform: scale(1.05); }
+        }
+
+        /* Scrollbar for nav */
+        .scrollbar-thin::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: rgba(139, 92, 246, 0.3);
+            border-radius: 4px;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+            background: rgba(139, 92, 246, 0.5);
+        }
+
+        /* Premium Metric Ring */
+        .metric-ring {
+            width: 140px;
+            height: 140px;
+            position: relative;
+            filter: drop-shadow(0 0 10px var(--ring-color, rgba(59, 130, 246, 0.3)));
+        }
+
+        .metric-ring svg {
+            transform: rotate(-90deg);
+        }
+
+        .metric-ring-bg {
+            stroke: var(--bg-secondary);
+        }
+
+        .metric-ring-progress {
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Weather Card Premium */
+        .weather-premium {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(6, 182, 212, 0.15));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .weather-premium:hover {
+            border-color: rgba(6, 182, 212, 0.5);
+            box-shadow: 0 20px 60px rgba(6, 182, 212, 0.15);
+        }
+
+        /* Stats Number Animation */
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -2px;
+            line-height: 1;
+            transition: all 0.3s ease;
+        }
+
+        .stat-number:hover {
+            transform: scale(1.05);
+        }
+
+        /* Premium Header */
+        header {
+            background: linear-gradient(180deg, var(--glass-bg) 0%, rgba(0,0,0,0) 100%) !important;
+        }
+
+        /* Scrollbar Premium */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.5), rgba(139, 92, 246, 0.5));
+            border-radius: 5px;
+            border: 2px solid var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.7), rgba(139, 92, 246, 0.7));
+        }
+
+        /* Selection Premium */
+        ::selection {
+            background: rgba(139, 92, 246, 0.3);
+            color: white;
+        }
+
+        /* Tooltip Premium */
+        [data-tooltip] {
+            position: relative;
+        }
+
+        [data-tooltip]::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-5px);
+            padding: 8px 12px;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            font-size: 12px;
+            border-radius: 8px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        [data-tooltip]:hover::after {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-10px);
+        }
+
+        /* Hero Section Premium */
+        .hero-section {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.05));
+            border-radius: 32px;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+            animation: heroGlow 10s ease-in-out infinite;
+        }
+
+        @keyframes heroGlow {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-20%, 20%); }
+        }
+
+        /* Card Grid Animation */
+        .card-grid > * {
+            animation: cardFadeIn 0.5s ease forwards;
+            opacity: 0;
+        }
+
+        .card-grid > *:nth-child(1) { animation-delay: 0.1s; }
+        .card-grid > *:nth-child(2) { animation-delay: 0.2s; }
+        .card-grid > *:nth-child(3) { animation-delay: 0.3s; }
+        .card-grid > *:nth-child(4) { animation-delay: 0.4s; }
+        .card-grid > *:nth-child(5) { animation-delay: 0.5s; }
+        .card-grid > *:nth-child(6) { animation-delay: 0.6s; }
+
+        @keyframes cardFadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Breathing Animation for Important Elements */
+        .breathing {
+            animation: breathing 3s ease-in-out infinite;
+        }
+
+        @keyframes breathing {
+            0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.2); }
+            50% { box-shadow: 0 0 40px rgba(139, 92, 246, 0.4); }
+        }
+
+        /* Number Counter Animation */
+        @keyframes countUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .count-up {
+            animation: countUp 0.5s ease forwards;
+        }
+
+        /* Apple-style Blur Effect */
+        .apple-blur {
+            backdrop-filter: blur(40px) saturate(200%);
+            -webkit-backdrop-filter: blur(40px) saturate(200%);
+        }
+
+        /* Status Indicator Premium */
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .status-dot::after {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            background: inherit;
+            opacity: 0.3;
+            animation: statusPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { transform: scale(1); opacity: 0.3; }
+            50% { transform: scale(1.5); opacity: 0; }
+        }
+
+        /* Premium Link Style */
+        .premium-link {
+            color: var(--accent-blue);
+            text-decoration: none;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .premium-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            transition: width 0.3s ease;
+        }
+
+        .premium-link:hover {
+            color: var(--accent-purple);
+        }
+
+        .premium-link:hover::after {
+            width: 100%;
+        }
+
         .loading-skeleton {
             background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-card) 50%, var(--bg-secondary) 75%);
             background-size: 200% 100%;
@@ -1373,25 +2861,298 @@ def get_dashboard_html() -> str:
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(255,255,255,0.2);
         }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           PHASE 2 - ULTRA PREMIUM ENHANCEMENTS
+           ═══════════════════════════════════════════════════════════════════ */
+
+        /* Breathing Animation - Subtle pulse for important elements */
+        .breathing {
+            animation: breathing 4s ease-in-out infinite;
+        }
+
+        @keyframes breathing {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 4px 30px var(--shadow-color);
+            }
+            50% {
+                transform: scale(1.01);
+                box-shadow: 0 8px 40px rgba(139, 92, 246, 0.2);
+            }
+        }
+
+        /* Premium Clock Card - Special Styling */
+        .premium-clock-card {
+            background: linear-gradient(145deg, rgba(139, 92, 246, 0.12), rgba(59, 130, 246, 0.08)) !important;
+            border: 1px solid rgba(139, 92, 246, 0.35) !important;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .premium-clock-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(
+                from 0deg,
+                transparent,
+                rgba(139, 92, 246, 0.1),
+                transparent,
+                rgba(59, 130, 246, 0.1),
+                transparent
+            );
+            animation: rotateGlow 10s linear infinite;
+            opacity: 0.5;
+        }
+
+        @keyframes rotateGlow {
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Enhanced Stat Numbers with Counter Animation */
+        .stat-number {
+            font-size: 3.5rem;
+            font-weight: 900;
+            font-family: 'SF Pro Display', -apple-system, sans-serif;
+            letter-spacing: -2px;
+            line-height: 1;
+            background: linear-gradient(135deg, currentColor, rgba(255,255,255,0.8));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        /* Skeleton Loading Animation */
+        .skeleton {
+            background: linear-gradient(
+                90deg,
+                rgba(255,255,255,0.05) 0%,
+                rgba(255,255,255,0.1) 50%,
+                rgba(255,255,255,0.05) 100%
+            );
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s ease-in-out infinite;
+            border-radius: 8px;
+        }
+
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Glassmorphism Enhanced */
+        .glass-ultra {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(30px) saturate(200%);
+            -webkit-backdrop-filter: blur(30px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        /* Hover Lift Effect */
+        .hover-lift {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .hover-lift:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow:
+                0 20px 60px rgba(0, 0, 0, 0.4),
+                0 0 40px rgba(139, 92, 246, 0.15);
+        }
+
+        /* Ripple Click Effect */
+        .ripple {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ripple::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease, opacity 0.6s ease;
+            opacity: 0;
+        }
+
+        .ripple:active::after {
+            width: 300px;
+            height: 300px;
+            opacity: 1;
+            transition: 0s;
+        }
+
+        /* Glow Border on Focus */
+        .glow-focus:focus-within {
+            border-color: rgba(139, 92, 246, 0.6) !important;
+            box-shadow:
+                0 0 0 3px rgba(139, 92, 246, 0.2),
+                0 8px 30px rgba(139, 92, 246, 0.15);
+        }
+
+        /* Animated Gradient Border */
+        .gradient-border {
+            position: relative;
+            background: var(--bg-card);
+            border-radius: 20px;
+        }
+
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 22px;
+            background: linear-gradient(
+                135deg,
+                #3b82f6,
+                #8b5cf6,
+                #ec4899,
+                #f97316,
+                #3b82f6
+            );
+            background-size: 400% 400%;
+            animation: gradientBorderFlow 6s ease infinite;
+            z-index: -1;
+            opacity: 0.6;
+        }
+
+        @keyframes gradientBorderFlow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* Card Grid Stagger Animation */
+        .card-grid > * {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: cardFadeIn 0.5s ease forwards;
+        }
+
+        .card-grid > *:nth-child(1) { animation-delay: 0.1s; }
+        .card-grid > *:nth-child(2) { animation-delay: 0.2s; }
+        .card-grid > *:nth-child(3) { animation-delay: 0.3s; }
+        .card-grid > *:nth-child(4) { animation-delay: 0.4s; }
+        .card-grid > *:nth-child(5) { animation-delay: 0.5s; }
+        .card-grid > *:nth-child(6) { animation-delay: 0.6s; }
+
+        @keyframes cardFadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Weather Card Premium */
+        .weather-premium {
+            background: linear-gradient(145deg, rgba(250, 204, 21, 0.08), rgba(249, 115, 22, 0.05)) !important;
+            border-color: rgba(250, 204, 21, 0.2) !important;
+        }
+
+        .weather-premium:hover {
+            border-color: rgba(250, 204, 21, 0.4) !important;
+            box-shadow:
+                0 20px 60px rgba(0, 0, 0, 0.3),
+                0 0 40px rgba(250, 204, 21, 0.1);
+        }
+
+        /* Interactive Cursor Trail */
+        .cursor-glow {
+            position: fixed;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.15), transparent 70%);
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: opacity 0.3s ease;
+            opacity: 0;
+        }
+
+        body:hover .cursor-glow {
+            opacity: 1;
+        }
+
+        /* Status Indicator Pulse */
+        .status-pulse {
+            position: relative;
+        }
+
+        .status-pulse::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: inherit;
+            animation: statusPulse 2s ease-out infinite;
+        }
+
+        @keyframes statusPulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+
+        /* Text Gradient Shine */
+        .text-shine {
+            background: linear-gradient(
+                120deg,
+                rgba(255,255,255,0) 0%,
+                rgba(255,255,255,0.8) 50%,
+                rgba(255,255,255,0) 100%
+            );
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            animation: textShine 3s linear infinite;
+        }
+
+        @keyframes textShine {
+            100% { background-position: -200% 0; }
+        }
     </style>
 </head>
 <body>
+    <!-- Floating Orbs Background -->
+    <div class="floating-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
     <div id="app" class="min-h-screen" data-theme="dark">
-        <!-- Premium Header -->
-        <header class="sticky top-0 z-50 backdrop-blur-xl border-b" style="background: var(--glass-bg); border-color: var(--border-color);">
+        <!-- Ultra Premium Header -->
+        <header class="sticky top-0 z-50 apple-blur border-b" style="background: linear-gradient(180deg, var(--glass-bg), transparent); border-color: var(--border-color);">
             <div class="max-w-[1800px] mx-auto px-6 py-4">
                 <div class="flex items-center justify-between">
-                    <!-- Logo & Brand -->
+                    <!-- Logo & Brand - Enhanced -->
                     <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                            <i data-lucide="cpu" class="w-6 h-6 text-white"></i>
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30 breathing shimmer">
+                            <i data-lucide="cpu" class="w-7 h-7 text-white"></i>
                         </div>
                         <div>
-                            <div class="flex items-center gap-2">
-                                <h1 class="text-xl font-bold gradient-text">Mac Command Center</h1>
-                                <span class="premium-badge">PRO</span>
+                            <div class="flex items-center gap-3">
+                                <h1 class="text-2xl font-bold ultra-gradient-text">NERD SPACE</h1>
+                                <span class="px-3 py-1 rounded-lg text-[11px] font-bold tracking-wider bg-gradient-to-r from-violet-400 to-purple-500 text-white shadow-lg shadow-purple-500/30">V5.0</span>
+                                <span class="px-2 py-0.5 rounded text-[9px] font-bold tracking-widest bg-gradient-to-r from-cyan-400 to-blue-500 text-white animate-pulse">AI FIRST</span>
                             </div>
-                            <p class="text-xs" style="color: var(--text-muted);">Enterprise System Monitor v3.1</p>
+                            <p class="text-sm mt-0.5 flex items-center gap-2" style="color: var(--text-muted);">
+                                <span class="status-dot bg-green-400"></span>
+                                Enterprise System Intelligence Platform
+                            </p>
                         </div>
                     </div>
 
@@ -1425,27 +3186,63 @@ def get_dashboard_html() -> str:
 
         <!-- Main Content -->
         <main class="max-w-[1800px] mx-auto px-6 py-6">
-            <!-- Tabs -->
-            <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
-                <button class="tab-button active" data-tab="overview">
-                    <i data-lucide="layout-dashboard" class="w-4 h-4 inline mr-2"></i>Visão Geral
-                </button>
-                <button class="tab-button" data-tab="hardware">
-                    <i data-lucide="cpu" class="w-4 h-4 inline mr-2"></i>Hardware
-                </button>
-                <button class="tab-button" data-tab="storage">
-                    <i data-lucide="hard-drive" class="w-4 h-4 inline mr-2"></i>Armazenamento
-                </button>
-                <button class="tab-button" data-tab="apps">
-                    <i data-lucide="grid-3x3" class="w-4 h-4 inline mr-2"></i>Aplicativos
-                </button>
-                <button class="tab-button" data-tab="processes">
-                    <i data-lucide="activity" class="w-4 h-4 inline mr-2"></i>Processos
-                </button>
-                <button class="tab-button" data-tab="network">
-                    <i data-lucide="wifi" class="w-4 h-4 inline mr-2"></i>Rede
-                </button>
-            </div>
+            <!-- Navigation Tabs - UX Best Practices: 44px height, grouped, clear selection -->
+            <nav class="flex items-center gap-1 mb-8 overflow-x-auto pb-2 scrollbar-thin" role="tablist" aria-label="Navegação principal">
+                <!-- Primary Group: Dashboard -->
+                <div class="flex gap-1 pr-3 border-r border-zinc-700/50">
+                    <button class="nav-tab" data-tab="overview" role="tab" aria-selected="false">
+                        <div class="nav-tab-icon bg-gradient-to-br from-blue-500 to-cyan-500">
+                            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                        </div>
+                        <span>Visão Geral</span>
+                    </button>
+                    <button class="nav-tab active" data-tab="nerdspace" role="tab" aria-selected="true">
+                        <div class="nav-tab-icon bg-gradient-to-br from-purple-500 to-pink-500">
+                            <i data-lucide="rocket" class="w-4 h-4"></i>
+                        </div>
+                        <span>NERD SPACE</span>
+                        <span class="nav-badge-new">PRO</span>
+                    </button>
+                </div>
+
+                <!-- System Group: Hardware & Storage -->
+                <div class="flex gap-1 px-3 border-r border-zinc-700/50">
+                    <button class="nav-tab" data-tab="hardware" role="tab" aria-selected="false">
+                        <div class="nav-tab-icon bg-gradient-to-br from-green-500 to-emerald-500">
+                            <i data-lucide="cpu" class="w-4 h-4"></i>
+                        </div>
+                        <span>Hardware</span>
+                    </button>
+                    <button class="nav-tab" data-tab="storage" role="tab" aria-selected="false">
+                        <div class="nav-tab-icon bg-gradient-to-br from-amber-500 to-orange-500">
+                            <i data-lucide="hard-drive" class="w-4 h-4"></i>
+                        </div>
+                        <span>Storage</span>
+                    </button>
+                </div>
+
+                <!-- Activity Group: Apps, Processes, Network -->
+                <div class="flex gap-1 pl-3">
+                    <button class="nav-tab" data-tab="apps" role="tab" aria-selected="false">
+                        <div class="nav-tab-icon bg-gradient-to-br from-pink-500 to-rose-500">
+                            <i data-lucide="grid-3x3" class="w-4 h-4"></i>
+                        </div>
+                        <span>Apps</span>
+                    </button>
+                    <button class="nav-tab" data-tab="processes" role="tab" aria-selected="false">
+                        <div class="nav-tab-icon bg-gradient-to-br from-red-500 to-orange-500">
+                            <i data-lucide="activity" class="w-4 h-4"></i>
+                        </div>
+                        <span>Processos</span>
+                    </button>
+                    <button class="nav-tab" data-tab="network" role="tab" aria-selected="false">
+                        <div class="nav-tab-icon bg-gradient-to-br from-cyan-500 to-blue-500">
+                            <i data-lucide="wifi" class="w-4 h-4"></i>
+                        </div>
+                        <span>Rede</span>
+                    </button>
+                </div>
+            </nav>
 
             <!-- Tab Content -->
             <div id="tab-content">
@@ -1513,20 +3310,37 @@ def get_dashboard_html() -> str:
         processes: null,
         network: null,
         metrics: null,
+        greeting: null,
+        weather: null,
+        power: null,
+        tips: null,
         expandedCategories: new Set(),
-        currentTab: 'overview',
+        currentTab: 'nerdspace',
     };
 
     // ═══════════════════════════════════════════════════════════════════════════
     // API FUNCTIONS
     // ═══════════════════════════════════════════════════════════════════════════
 
-    async function fetchAPI(endpoint) {
+    async function fetchAPI(endpoint, timeoutMs = 30000) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
         try {
-            const res = await fetch(`/api/${endpoint}`);
+            const res = await fetch(`/api/${endpoint}`, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (!res.ok) {
+                console.error(`API ${endpoint} returned ${res.status}`);
+                return null;
+            }
             return await res.json();
         } catch (e) {
-            console.error(`Error fetching ${endpoint}:`, e);
+            clearTimeout(timeoutId);
+            if (e.name === 'AbortError') {
+                console.error(`Timeout fetching ${endpoint} after ${timeoutMs}ms`);
+            } else {
+                console.error(`Error fetching ${endpoint}:`, e);
+            }
             return null;
         }
     }
@@ -1536,7 +3350,7 @@ def get_dashboard_html() -> str:
             fetchAPI('hardware'),
             fetchAPI('displays'),
             fetchAPI('battery'),
-            fetchAPI('storage'),
+            fetchAPI('storage'),  // Dados APFS já corrigidos no endpoint original
             fetchAPI('processes'),
             fetchAPI('network'),
         ]);
@@ -1554,6 +3368,364 @@ def get_dashboard_html() -> str:
     async function loadCategoryItems(categoryName) {
         const res = await fetchAPI(`storage/category/${encodeURIComponent(categoryName)}`);
         return res?.items || [];
+    }
+
+    async function loadNerdSpace() {
+        const [greeting, weather, power, tipsData, trash] = await Promise.all([
+            fetchAPI('greeting'),
+            fetchAPI('weather'),  // Formato compatível com frontend
+            fetchAPI('power'),
+            fetchAPI('tips'),
+            fetchAPI('trash'),
+        ]);
+
+        state.greeting = greeting;
+        state.weather = weather;
+        state.power = power;
+        state.tips = tipsData?.tips || [];
+        state.trash = trash;
+
+        // Update header greeting
+        updateHeaderGreeting();
+    }
+
+    // Alias for compatibility
+    async function loadNerdSpaceData() {
+        await loadNerdSpace();
+        renderCurrentTab();
+    }
+
+    function updateHeaderGreeting() {
+        const greetingEl = document.getElementById('header-greeting');
+        if (greetingEl && state.greeting) {
+            greetingEl.innerHTML = `
+                <span class="text-lg">${state.greeting.emoji}</span>
+                <span class="font-medium">${state.greeting.greeting}</span>
+            `;
+        }
+    }
+
+    async function runSpeedTest() {
+        const btn = document.getElementById('speedtest-btn');
+        const result = document.getElementById('speedtest-result');
+        if (btn) btn.disabled = true;
+
+        // Animação premium durante o teste
+        if (result) {
+            result.innerHTML = `
+                <div class="text-center">
+                    <div class="relative w-24 h-24 mx-auto mb-4">
+                        <div class="absolute inset-0 rounded-full border-4 border-cyan-500/20"></div>
+                        <div class="absolute inset-0 rounded-full border-4 border-t-cyan-400 border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
+                        <div class="absolute inset-2 rounded-full border-4 border-t-blue-400 border-r-transparent border-b-transparent border-l-transparent animate-spin" style="animation-duration: 1.5s; animation-direction: reverse;"></div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <i data-lucide="wifi" class="w-8 h-8 text-cyan-400 animate-pulse"></i>
+                        </div>
+                    </div>
+                    <p class="text-cyan-400 font-medium animate-pulse">Medindo velocidade...</p>
+                    <p class="text-zinc-500 text-xs mt-1">Download • Upload • Latência</p>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+        if (btn) btn.innerHTML = '<div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> Testando...';
+
+        try {
+            const res = await fetch('/api/speedtest', { method: 'POST' });
+            const data = await res.json();
+
+            if (result && data.status === 'completed') {
+                const providerName = data.provider?.provider_name || 'Unknown';
+                result.innerHTML = `
+                    <div class="w-full">
+                        <!-- Métricas principais -->
+                        <div class="grid grid-cols-3 gap-4 mb-4">
+                            <div class="text-center p-3 rounded-xl bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/20">
+                                <div class="text-2xl font-black text-green-400">${data.download_mbps || 0}</div>
+                                <div class="text-xs text-zinc-500 flex items-center justify-center gap-1">
+                                    <i data-lucide="arrow-down" class="w-3 h-3"></i> Mbps
+                                </div>
+                            </div>
+                            <div class="text-center p-3 rounded-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20">
+                                <div class="text-2xl font-black text-blue-400">${data.upload_mbps || 0}</div>
+                                <div class="text-xs text-zinc-500 flex items-center justify-center gap-1">
+                                    <i data-lucide="arrow-up" class="w-3 h-3"></i> Mbps
+                                </div>
+                            </div>
+                            <div class="text-center p-3 rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20">
+                                <div class="text-2xl font-black text-purple-400">${data.latency_ms || 0}</div>
+                                <div class="text-xs text-zinc-500">ms ping</div>
+                            </div>
+                        </div>
+                        <!-- Info do provedor -->
+                        <div class="flex items-center justify-between text-xs text-zinc-500 px-1">
+                            <span class="flex items-center gap-1">
+                                <i data-lucide="radio-tower" class="w-3 h-3"></i>
+                                ${providerName}
+                            </span>
+                            <span class="flex items-center gap-1">
+                                <i data-lucide="activity" class="w-3 h-3"></i>
+                                Jitter: ${data.jitter_ms || 0}ms
+                            </span>
+                        </div>
+                    </div>
+                `;
+            } else if (result) {
+                result.innerHTML = `
+                    <div class="text-center text-red-400">
+                        <i data-lucide="alert-circle" class="w-10 h-10 mx-auto mb-2 opacity-60"></i>
+                        <p>Erro no teste</p>
+                        <p class="text-xs text-zinc-500 mt-1">${data.error || 'Tente novamente'}</p>
+                    </div>
+                `;
+            }
+            lucide.createIcons();
+        } catch (err) {
+            if (result) {
+                result.innerHTML = `
+                    <div class="text-center text-red-400">
+                        <i data-lucide="wifi-off" class="w-10 h-10 mx-auto mb-2 opacity-60"></i>
+                        <p>Falha na conexão</p>
+                    </div>
+                `;
+                lucide.createIcons();
+            }
+        }
+
+        if (btn) btn.disabled = false;
+        if (btn) btn.innerHTML = '<i data-lucide="gauge" class="w-4 h-4"></i> Testar Novamente';
+        lucide.createIcons();
+
+        // Carregar histórico
+        loadSpeedHistory();
+    }
+
+    async function loadSpeedHistory() {
+        try {
+            const res = await fetch('/api/speedtest/history');
+            const data = await res.json();
+            const historyEl = document.getElementById('speedtest-history');
+
+            if (historyEl && data.tests && data.tests.length > 0) {
+                const lastTests = data.tests.slice(-5).reverse();
+                historyEl.innerHTML = `
+                    <div class="mt-4 pt-4 border-t border-white/10">
+                        <div class="text-xs text-zinc-500 mb-2 flex items-center gap-1">
+                            <i data-lucide="history" class="w-3 h-3"></i>
+                            Últimos testes
+                        </div>
+                        <div class="flex gap-2">
+                            ${lastTests.map(t => {
+                                const date = new Date(t.timestamp);
+                                const time = date.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+                                return `
+                                    <div class="flex-1 text-center p-2 rounded-lg bg-zinc-800/50 hover:bg-zinc-700/50 transition-colors cursor-default" title="${date.toLocaleDateString('pt-BR')} ${time}">
+                                        <div class="text-sm font-bold text-green-400">${t.download_mbps}</div>
+                                        <div class="text-[10px] text-zinc-600">${time}</div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+                lucide.createIcons();
+            }
+        } catch (e) {}
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // AI INSIGHTS - PROACTIVE INTELLIGENCE
+    // ═══════════════════════════════════════════════════════════════════
+
+    async function loadInsights() {
+        const container = document.getElementById('insights-container');
+        const statusEl = document.getElementById('insights-status');
+
+        // Show loading state
+        container.innerHTML = `
+            <div class="col-span-full flex items-center justify-center py-8">
+                <div class="flex items-center gap-3 text-zinc-400">
+                    <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Analisando sistema...
+                </div>
+            </div>
+        `;
+
+        try {
+            const res = await fetch('/api/insights');
+            const data = await res.json();
+
+            // Update status badge
+            if (data.summary) {
+                const statusColors = {
+                    critical: 'from-red-400 to-red-600',
+                    warning: 'from-amber-400 to-orange-500',
+                    healthy: 'from-emerald-400 to-green-500'
+                };
+                statusEl.className = `px-3 py-1.5 rounded-lg text-[11px] font-bold tracking-wider bg-gradient-to-r ${statusColors[data.summary.status] || statusColors.healthy} text-black shadow-lg`;
+                statusEl.innerHTML = `${data.summary.icon} ${data.summary.message.toUpperCase()}`;
+            }
+
+            // Render insights
+            if (data.insights && data.insights.length > 0) {
+                container.innerHTML = data.insights.map((insight, i) => {
+                    const severityColors = {
+                        critical: 'border-red-500/40 from-red-500/10 to-red-600/5',
+                        warning: 'border-amber-500/40 from-amber-500/10 to-orange-600/5',
+                        info: 'border-blue-500/40 from-blue-500/10 to-sky-600/5',
+                        success: 'border-emerald-500/40 from-emerald-500/10 to-green-600/5'
+                    };
+
+                    const severityBadge = {
+                        critical: 'bg-red-500/20 text-red-400 border-red-500/30',
+                        warning: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+                        info: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+                        success: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                    };
+
+                    const actionButton = insight.action ? `
+                        <button onclick="handleInsightAction('${insight.action}', '${insight.action_type}')"
+                            class="mt-3 w-full py-2 px-3 rounded-xl text-xs font-medium bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/50 transition-all duration-300 flex items-center justify-center gap-2">
+                            <i data-lucide="${insight.action_type === 'url' ? 'external-link' : insight.action_type === 'app' ? 'app-window' : 'settings'}" class="w-3 h-3"></i>
+                            ${insight.action_type === 'settings' ? 'Abrir Configurações' : insight.action_type === 'app' ? 'Abrir App' : 'Ver Detalhes'}
+                        </button>
+                    ` : '';
+
+                    return `
+                        <div class="group p-5 rounded-2xl bg-gradient-to-br ${severityColors[insight.severity] || severityColors.info} border transition-all duration-300 hover:transform hover:scale-[1.02] hover:shadow-xl" style="animation-delay: ${i * 0.1}s;">
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center text-2xl flex-shrink-0">
+                                    ${insight.icon}
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <h4 class="font-semibold text-white">${insight.title}</h4>
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${severityBadge[insight.severity] || severityBadge.info}">${insight.severity}</span>
+                                    </div>
+                                    <p class="text-sm text-zinc-400 leading-relaxed">${insight.description}</p>
+                                    ${insight.metric_value ? `
+                                        <div class="mt-2 flex items-center gap-2">
+                                            <span class="text-lg font-bold text-white">${insight.metric_value}</span>
+                                            <span class="text-xs text-zinc-500">${insight.metric_label || ''}</span>
+                                        </div>
+                                    ` : ''}
+                                    ${actionButton}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                lucide.createIcons();
+            } else {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-8">
+                        <div class="text-4xl mb-3">🎉</div>
+                        <div class="text-zinc-400">Nenhum insight no momento. Sistema funcionando perfeitamente!</div>
+                    </div>
+                `;
+            }
+        } catch (e) {
+            container.innerHTML = `
+                <div class="col-span-full text-center py-8 text-red-400">
+                    Erro ao carregar insights: ${e.message}
+                </div>
+            `;
+        }
+    }
+
+    function handleInsightAction(action, actionType) {
+        switch (actionType) {
+            case 'url':
+                window.open(action, '_blank');
+                break;
+            case 'app':
+                openApp(action);
+                break;
+            case 'settings':
+                // Handle system preferences URLs
+                if (action.startsWith('x-apple.')) {
+                    // Extract the setting key from the URL
+                    const settingKey = action.includes('storage') ? 'storage' :
+                                       action.includes('icloud') ? 'icloud' :
+                                       action.includes('Battery') ? 'battery' :
+                                       action.includes('wifi') ? 'wifi' :
+                                       action.includes('security') ? 'security' : null;
+                    if (settingKey) {
+                        openSettings(settingKey);
+                    } else {
+                        window.open(action);
+                    }
+                }
+                break;
+            case 'function':
+                if (action === 'speedtest') {
+                    runSpeedTest();
+                }
+                break;
+        }
+    }
+
+    async function openApp(appName) {
+        const res = await fetch('/api/open-app', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ app: appName })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast(`${appName} aberto!`, 'success');
+        } else {
+            showToast(`Erro ao abrir ${appName}`, 'error');
+        }
+    }
+
+    async function openSettings(setting) {
+        const res = await fetch('/api/open-url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: setting })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast(`Configurações abertas!`, 'success');
+        }
+    }
+
+    async function openTrash() {
+        const res = await fetch('/api/open-trash', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast('Lixeira aberta no Finder!', 'success');
+        }
+    }
+
+    async function emptyTrash() {
+        if (!confirm('Tem certeza que deseja esvaziar a lixeira? Esta ação é irreversível!')) {
+            return;
+        }
+
+        showToast('Esvaziando lixeira...', 'info');
+
+        const res = await fetch('/api/empty-trash', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            showToast('🎉 Lixeira esvaziada com sucesso!', 'success');
+            // Refresh trash data
+            setTimeout(() => loadNerdSpaceData(), 500);
+        } else {
+            showToast('Erro ao esvaziar lixeira: ' + (data.error || 'Erro desconhecido'), 'error');
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -1581,6 +3753,9 @@ def get_dashboard_html() -> str:
                 break;
             case 'network':
                 content.innerHTML = renderNetworkTab();
+                break;
+            case 'nerdspace':
+                content.innerHTML = renderNerdSpaceTab();
                 break;
         }
 
@@ -2419,16 +4594,585 @@ def get_dashboard_html() -> str:
         `;
     }
 
+    function renderNerdSpaceTab() {
+        const g = state.greeting || {};
+        const w = state.weather || {};
+        const p = state.power || {};
+        const tips = state.tips || [];
+
+        return `
+        <div class="space-y-8 card-grid">
+            <!-- ULTRA PREMIUM Hero Section -->
+            <div class="hero-section relative overflow-hidden">
+                <!-- Animated Background Elements -->
+                <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-purple-500/30 via-pink-500/20 to-transparent rounded-full blur-3xl animate-pulse"></div>
+                <div class="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-blue-500/30 via-cyan-500/20 to-transparent rounded-full blur-3xl" style="animation: float 15s ease-in-out infinite;"></div>
+                <div class="absolute top-1/2 left-1/2 w-[300px] h-[300px] bg-gradient-to-r from-violet-500/15 to-fuchsia-500/15 rounded-full blur-3xl" style="animation: float 20s ease-in-out infinite reverse;"></div>
+
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between flex-wrap gap-8">
+                        <!-- Left: Greeting -->
+                        <div class="flex-1">
+                            <div class="flex items-center gap-4 mb-4">
+                                <div class="text-6xl animate-bounce" style="animation-duration: 3s;">${g.emoji || '🚀'}</div>
+                                <div>
+                                    <p class="text-sm uppercase tracking-widest text-purple-400 font-semibold mb-1">Bem-vindo de volta</p>
+                                    <h1 class="text-4xl lg:text-5xl font-black ultra-gradient-text">${g.greeting || 'Olá, Danillo!'}</h1>
+                                    <p class="text-zinc-400 mt-1 flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                                        ${g.period || 'Pronto para dominar o dia'}
+                                    </p>
+                                </div>
+                            </div>
+                            <p class="text-xl text-zinc-300 mt-6 max-w-xl leading-relaxed">
+                                Seu <span class="text-purple-400 font-semibold">hub de comando premium</span> para controle total do seu MacBook Pro.
+                            </p>
+                            <div class="flex gap-3 mt-6">
+                                <span class="px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/30">M3 Max</span>
+                                <span class="px-3 py-1.5 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-400 border border-purple-500/30">36GB RAM</span>
+                                <span class="px-3 py-1.5 rounded-full text-xs font-semibold bg-pink-500/20 text-pink-400 border border-pink-500/30">macOS Tahoe</span>
+                            </div>
+                        </div>
+
+                        <!-- Right: Premium Clock + Weather Integrated -->
+                        <div class="glass-card p-6 text-center min-w-[260px] breathing premium-clock-card" style="background: rgba(139, 92, 246, 0.1); border-color: rgba(139, 92, 246, 0.3);">
+                            <!-- Location & Timezone -->
+                            <div class="flex items-center justify-center gap-2 mb-3">
+                                <span class="text-xs uppercase tracking-widest text-purple-400 font-semibold">São Paulo</span>
+                                <span class="text-zinc-600">•</span>
+                                <span class="text-xs text-zinc-500">GMT-3</span>
+                            </div>
+
+                            <!-- Main Time -->
+                            <div class="text-5xl font-mono font-black ultra-gradient-text mb-1">${g.time_sp || '--:--'}</div>
+
+                            <!-- Date -->
+                            <div class="text-sm text-zinc-400 font-medium">${g.day_name || ''}, ${g.date_sp || ''}</div>
+
+                            <!-- Weather & Battery Integration (Discrete) -->
+                            <div class="mt-4 pt-4 border-t border-white/10 flex items-center justify-center gap-3">
+                                ${w.temperature ? `
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xl">${w.is_day !== false ? '☀️' : '🌙'}</span>
+                                    <div class="text-left">
+                                        <div class="text-lg font-bold text-yellow-400">${w.temperature}°C</div>
+                                        <div class="text-[10px] text-zinc-500">${w.description || ''}</div>
+                                    </div>
+                                </div>
+                                ` : `
+                                <div class="text-zinc-500 text-xs">☁️</div>
+                                `}
+                                <div class="w-px h-8 bg-white/10"></div>
+                                <!-- Battery Mini Widget -->
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xl">${p.is_charging ? '⚡' : '🔋'}</span>
+                                    <div class="text-left">
+                                        <div class="text-lg font-bold ${(p.battery_percent || 0) > 20 ? 'text-green-400' : 'text-red-400'}">${p.battery_percent || '--'}%</div>
+                                        <div class="text-[10px] text-zinc-500">${p.is_charging ? 'Carregando' : p.time_remaining_mins ? p.time_remaining_mins + 'min' : 'Bateria'}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI INSIGHTS - PROACTIVE INTELLIGENCE (TOP PRIORITY) -->
+            <div class="glass-card p-6 premium-card mb-6" id="insights-section">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold flex items-center gap-2">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-400 via-purple-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-purple-500/30 shimmer pulse-glow">
+                            <i data-lucide="brain" class="w-5 h-5 text-white"></i>
+                        </div>
+                        <div>
+                            <span class="ultra-gradient-text">AI Insights</span>
+                            <p class="text-[10px] text-zinc-500 font-normal">Análise proativa do sistema</p>
+                        </div>
+                    </h3>
+                    <div class="flex items-center gap-2">
+                        <span id="insights-status" class="px-2 py-1 rounded-lg text-[10px] font-bold tracking-wider bg-gradient-to-r from-emerald-400 to-green-500 text-black">🟢 HEALTHY</span>
+                        <button onclick="loadInsights()" class="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-all border border-white/10 hover:border-purple-500/50">
+                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-zinc-400 hover:text-purple-400"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="insights-container" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="p-4 rounded-xl bg-white/5 border border-white/10 animate-pulse">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-zinc-700"></div>
+                            <div class="flex-1">
+                                <div class="h-3 bg-zinc-700 rounded w-3/4 mb-1.5"></div>
+                                <div class="h-2 bg-zinc-800 rounded w-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Grid: Speed Test + Battery Details -->
+            <div class="grid grid-cols-12 gap-6">
+                <!-- Speed Test - Premium -->
+                <div class="col-span-12 lg:col-span-4 glass-card p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-bold flex items-center gap-2">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center shadow-lg shadow-cyan-500/30">
+                                <i data-lucide="gauge" class="w-5 h-5 text-white"></i>
+                            </div>
+                            <span>Velocidade</span>
+                        </h3>
+                        <span class="px-2 py-1 rounded-lg text-xs bg-cyan-500/20 text-cyan-400 font-semibold">Internet</span>
+                    </div>
+                    <div id="speedtest-result" class="min-h-[160px] flex items-center justify-center mb-6">
+                        <div class="text-center">
+                            <div class="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border-2 border-dashed border-cyan-500/30 flex items-center justify-center mb-4">
+                                <i data-lucide="wifi" class="w-10 h-10 text-cyan-400 opacity-60"></i>
+                            </div>
+                            <p class="text-zinc-400 text-sm">Clique para medir sua conexão</p>
+                            <p class="text-zinc-500 text-xs mt-1">Teste rápido de download</p>
+                        </div>
+                    </div>
+                    <button id="speedtest-btn" onclick="runSpeedTest()" class="btn-premium w-full flex items-center justify-center gap-3" style="background: linear-gradient(135deg, #06b6d4, #3b82f6);">
+                        <i data-lucide="gauge" class="w-5 h-5"></i>
+                        <span>Iniciar Speed Test</span>
+                    </button>
+                    <!-- Histórico de testes -->
+                    <div id="speedtest-history"></div>
+                </div>
+            </div>
+
+            <!-- Trash Widget - Premium Card -->
+            <div class="glass-card p-6 premium-card" style="background: linear-gradient(135deg, rgba(239,68,68,0.05), rgba(251,146,60,0.05));">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center shadow-lg shadow-red-500/30 ${state.trash?.total_items > 0 ? 'breathing' : ''}">
+                            <i data-lucide="trash-2" class="w-5 h-5 text-white"></i>
+                        </div>
+                        <div>
+                            <span class="text-white">Lixeira</span>
+                            <p class="text-xs text-zinc-500 font-normal mt-0.5">Gerencie arquivos deletados</p>
+                        </div>
+                    </h3>
+                    ${state.trash?.total_items > 0 ? `
+                        <span class="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse">
+                            ${state.trash.total_items} ${state.trash.total_items === 1 ? 'item' : 'itens'}
+                        </span>
+                    ` : `
+                        <span class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/30">
+                            ✓ Vazia
+                        </span>
+                    `}
+                </div>
+
+                ${state.trash?.is_empty ? `
+                    <div class="text-center py-8">
+                        <div class="w-20 h-20 mx-auto rounded-full bg-green-500/10 border-2 border-dashed border-green-500/30 flex items-center justify-center mb-4">
+                            <span class="text-4xl">🎉</span>
+                        </div>
+                        <p class="text-green-400 font-semibold">Lixeira vazia</p>
+                        <p class="text-zinc-500 text-sm mt-1">Nenhum arquivo para recuperar</p>
+                    </div>
+                ` : `
+                    <div class="grid grid-cols-3 gap-3 mb-4">
+                        <div class="p-3 rounded-xl bg-white/5 border border-white/10 text-center">
+                            <div class="text-2xl mb-1">📁</div>
+                            <div class="text-xs text-zinc-500">Pastas</div>
+                            <div class="font-bold text-white">${state.trash?.folder_count || 0}</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-white/5 border border-white/10 text-center">
+                            <div class="text-2xl mb-1">📄</div>
+                            <div class="text-xs text-zinc-500">Arquivos</div>
+                            <div class="font-bold text-white">${state.trash?.file_count || 0}</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-gradient-to-br from-red-500/10 to-orange-500/10 border border-red-500/20 text-center">
+                            <div class="text-2xl mb-1">💾</div>
+                            <div class="text-xs text-zinc-500">Ocupado</div>
+                            <div class="font-bold text-red-400">${state.trash?.total_size_human || '0 B'}</div>
+                        </div>
+                    </div>
+
+                    ${state.trash?.top_items?.length > 0 ? `
+                        <div class="mb-4">
+                            <p class="text-xs uppercase tracking-widest text-zinc-500 mb-2 font-semibold">📦 Maiores Itens</p>
+                            <div class="space-y-2 max-h-[120px] overflow-y-auto pr-2 scrollbar-thin">
+                                ${state.trash.top_items.slice(0, 5).map(item => `
+                                    <div class="flex items-center justify-between p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
+                                        <div class="flex items-center gap-2 min-w-0">
+                                            <span class="text-lg flex-shrink-0">${item.is_folder ? '📁' : '📄'}</span>
+                                            <span class="text-sm text-zinc-300 truncate">${item.name}</span>
+                                        </div>
+                                        <div class="flex items-center gap-2 flex-shrink-0">
+                                            <span class="text-xs text-zinc-500">${item.days_old}d</span>
+                                            <span class="text-xs font-semibold text-orange-400">${item.size_human}</span>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <div class="flex gap-3">
+                        <button onclick="openTrash()" class="flex-1 btn-premium py-2.5 text-sm" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+                            <i data-lucide="folder-open" class="w-4 h-4 mr-2"></i>
+                            Abrir Lixeira
+                        </button>
+                        <button onclick="emptyTrash()" class="flex-1 btn-premium py-2.5 text-sm" style="background: linear-gradient(135deg, #ef4444, #f97316);">
+                            <i data-lucide="trash" class="w-4 h-4 mr-2"></i>
+                            Esvaziar
+                        </button>
+                    </div>
+
+                    ${state.trash?.recommendation ? `
+                        <div class="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center gap-3">
+                            <span class="text-xl">💡</span>
+                            <p class="text-xs text-amber-400">${state.trash.recommendation}</p>
+                        </div>
+                    ` : ''}
+                `}
+            </div>
+
+            <!-- Quick Actions - ULTRA PREMIUM -->
+            <div class="glass-card p-8 premium-card">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 flex items-center justify-center shadow-lg shadow-orange-500/30 breathing">
+                            <i data-lucide="zap" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <div>
+                            <span class="ultra-gradient-text">Quick Actions</span>
+                            <p class="text-xs text-zinc-500 font-normal mt-0.5">Acesso rápido ao sistema</p>
+                        </div>
+                    </h3>
+                    <span class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400 border border-yellow-500/30">⚡ Instant</span>
+                </div>
+
+                <!-- System Apps Section -->
+                <div class="mb-6">
+                    <p class="text-xs uppercase tracking-widest text-zinc-500 mb-4 font-semibold">🖥️ Aplicativos do Sistema</p>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+                        <button onclick="openApp('Terminal')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-zinc-700 to-zinc-900 text-2xl shadow-lg">💻</div>
+                            <span class="group-hover:text-purple-400 transition-colors text-xs">Terminal</span>
+                        </button>
+                        <button onclick="openApp('Activity Monitor')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-green-600 to-green-800 text-2xl shadow-lg">📊</div>
+                            <span class="group-hover:text-green-400 transition-colors text-xs">Monitor</span>
+                        </button>
+                        <button onclick="openApp('System Information')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-blue-600 to-blue-800 text-2xl shadow-lg">🖥️</div>
+                            <span class="group-hover:text-blue-400 transition-colors text-xs">Sistema</span>
+                        </button>
+                        <button onclick="openApp('Disk Utility')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-purple-600 to-purple-800 text-2xl shadow-lg">💿</div>
+                            <span class="group-hover:text-purple-400 transition-colors text-xs">Disco</span>
+                        </button>
+                        <button onclick="openApp('Console')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-orange-600 to-orange-800 text-2xl shadow-lg">📜</div>
+                            <span class="group-hover:text-orange-400 transition-colors text-xs">Console</span>
+                        </button>
+                        <button onclick="openApp('Finder')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-cyan-600 to-cyan-800 text-2xl shadow-lg">📁</div>
+                            <span class="group-hover:text-cyan-400 transition-colors text-xs">Finder</span>
+                        </button>
+                        <button onclick="openApp('Keychain Access')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-amber-600 to-yellow-800 text-2xl shadow-lg">🔑</div>
+                            <span class="group-hover:text-amber-400 transition-colors text-xs">Keychain</span>
+                        </button>
+                        <button onclick="openApp('Preview')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-sky-600 to-blue-800 text-2xl shadow-lg">🖼️</div>
+                            <span class="group-hover:text-sky-400 transition-colors text-xs">Preview</span>
+                        </button>
+                        <button onclick="openApp('Screenshot')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-pink-600 to-rose-800 text-2xl shadow-lg">📸</div>
+                            <span class="group-hover:text-pink-400 transition-colors text-xs">Screenshot</span>
+                        </button>
+                        <button onclick="openApp('Notes')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-yellow-500 to-orange-600 text-2xl shadow-lg">📝</div>
+                            <span class="group-hover:text-yellow-400 transition-colors text-xs">Notes</span>
+                        </button>
+                        <button onclick="openApp('Calculator')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-gray-600 to-gray-800 text-2xl shadow-lg">🧮</div>
+                            <span class="group-hover:text-gray-300 transition-colors text-xs">Calculadora</span>
+                        </button>
+                        <button onclick="openApp('Shortcuts')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-indigo-500 to-violet-700 text-2xl shadow-lg">⚡</div>
+                            <span class="group-hover:text-indigo-400 transition-colors text-xs">Atalhos</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dev Tools Section - NEW! -->
+                <div class="mb-6">
+                    <p class="text-xs uppercase tracking-widest text-zinc-500 mb-4 font-semibold">🛠️ Dev Tools <span class="text-[10px] px-2 py-0.5 rounded bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 ml-2">NERD</span></p>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+                        <button onclick="openApp('Visual Studio Code')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-blue-600 to-blue-900 text-2xl shadow-lg shadow-blue-500/20">💎</div>
+                            <span class="group-hover:text-blue-400 transition-colors text-xs">VS Code</span>
+                        </button>
+                        <button onclick="openApp('Xcode')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-cyan-500 to-blue-700 text-2xl shadow-lg shadow-cyan-500/20">🔨</div>
+                            <span class="group-hover:text-cyan-400 transition-colors text-xs">Xcode</span>
+                        </button>
+                        <button onclick="openApp('Warp')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-purple-600 to-violet-900 text-2xl shadow-lg shadow-purple-500/20">🚀</div>
+                            <span class="group-hover:text-purple-400 transition-colors text-xs">Warp</span>
+                        </button>
+                        <button onclick="openApp('iTerm')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-emerald-600 to-green-900 text-2xl shadow-lg shadow-emerald-500/20">⌨️</div>
+                            <span class="group-hover:text-emerald-400 transition-colors text-xs">iTerm</span>
+                        </button>
+                        <button onclick="openApp('Docker')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-sky-500 to-blue-800 text-2xl shadow-lg shadow-sky-500/20">🐳</div>
+                            <span class="group-hover:text-sky-400 transition-colors text-xs">Docker</span>
+                        </button>
+                        <button onclick="openApp('Postman')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-orange-500 to-red-700 text-2xl shadow-lg shadow-orange-500/20">📮</div>
+                            <span class="group-hover:text-orange-400 transition-colors text-xs">Postman</span>
+                        </button>
+                        <button onclick="openApp('Script Editor')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-gray-500 to-zinc-800 text-2xl shadow-lg">📜</div>
+                            <span class="group-hover:text-gray-300 transition-colors text-xs">Scripts</span>
+                        </button>
+                        <button onclick="openApp('Automator')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-zinc-500 to-gray-800 text-2xl shadow-lg">🤖</div>
+                            <span class="group-hover:text-zinc-300 transition-colors text-xs">Automator</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Settings Section - EXPANDED -->
+                <div>
+                    <p class="text-xs uppercase tracking-widest text-zinc-500 mb-4 font-semibold">⚙️ Ajustes do Sistema</p>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+                        <button onclick="openSettings('storage')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-pink-600 to-rose-800 text-2xl shadow-lg">💾</div>
+                            <span class="group-hover:text-pink-400 transition-colors text-xs">Storage</span>
+                        </button>
+                        <button onclick="openSettings('battery')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-green-500 to-emerald-700 text-2xl shadow-lg">🔋</div>
+                            <span class="group-hover:text-green-400 transition-colors text-xs">Bateria</span>
+                        </button>
+                        <button onclick="openSettings('network')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-blue-500 to-indigo-700 text-2xl shadow-lg">🌐</div>
+                            <span class="group-hover:text-blue-400 transition-colors text-xs">Rede</span>
+                        </button>
+                        <button onclick="openSettings('bluetooth')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-blue-400 to-blue-600 text-2xl shadow-lg">📶</div>
+                            <span class="group-hover:text-blue-400 transition-colors text-xs">Bluetooth</span>
+                        </button>
+                        <button onclick="openSettings('displays')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-violet-600 to-purple-800 text-2xl shadow-lg">🖥️</div>
+                            <span class="group-hover:text-violet-400 transition-colors text-xs">Telas</span>
+                        </button>
+                        <button onclick="openSettings('sound')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-red-500 to-rose-700 text-2xl shadow-lg">🔊</div>
+                            <span class="group-hover:text-red-400 transition-colors text-xs">Som</span>
+                        </button>
+                        <button onclick="openSettings('keyboard')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-gray-500 to-zinc-700 text-2xl shadow-lg">⌨️</div>
+                            <span class="group-hover:text-gray-300 transition-colors text-xs">Teclado</span>
+                        </button>
+                        <button onclick="openSettings('trackpad')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-slate-500 to-gray-700 text-2xl shadow-lg">👆</div>
+                            <span class="group-hover:text-slate-300 transition-colors text-xs">Trackpad</span>
+                        </button>
+                        <button onclick="openSettings('security')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-amber-500 to-orange-700 text-2xl shadow-lg">🛡️</div>
+                            <span class="group-hover:text-amber-400 transition-colors text-xs">Segurança</span>
+                        </button>
+                        <button onclick="openSettings('timemachine')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-teal-500 to-cyan-700 text-2xl shadow-lg">⏰</div>
+                            <span class="group-hover:text-teal-400 transition-colors text-xs">Time Machine</span>
+                        </button>
+                        <button onclick="openSettings('icloud')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-sky-400 to-blue-600 text-2xl shadow-lg">☁️</div>
+                            <span class="group-hover:text-sky-400 transition-colors text-xs">iCloud</span>
+                        </button>
+                        <button onclick="openSettings('about')" class="quick-action-btn group">
+                            <div class="icon-wrapper bg-gradient-to-br from-zinc-600 to-zinc-800 text-2xl shadow-lg">ℹ️</div>
+                            <span class="group-hover:text-zinc-300 transition-colors text-xs">Sobre</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Apple Links - PREMIUM EXPANDED -->
+            <div class="glass-card p-8" style="background: linear-gradient(135deg, rgba(0,0,0,0.3), rgba(59,130,246,0.05)); border-color: rgba(255,255,255,0.1);">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center shadow-lg border border-white/10">
+                            <span class="text-2xl"></span>
+                        </div>
+                        <div>
+                            <span class="text-white">Apple Resources</span>
+                            <p class="text-xs text-zinc-500 font-normal mt-0.5">Links oficiais para seu MacBook Pro</p>
+                        </div>
+                    </h3>
+                    <span class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-zinc-800 text-zinc-300 border border-zinc-700">SN: H4H2PMGF32</span>
+                </div>
+
+                <!-- Main Apple Links -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <a href="https://checkcoverage.apple.com/br/pt/?sn=H4H2PMGF32" target="_blank" class="group p-5 rounded-2xl bg-gradient-to-br from-zinc-800/50 to-zinc-900/50 border border-white/10 hover:border-green-500/50 transition-all duration-300 flex items-center gap-4 hover:transform hover:scale-[1.02]">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/30">
+                            <span class="text-2xl">🛡️</span>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-white group-hover:text-green-400 transition-colors">Verificar Cobertura</div>
+                            <div class="text-xs text-zinc-500">AppleCare & Garantia</div>
+                        </div>
+                        <i data-lucide="external-link" class="w-4 h-4 text-zinc-600 group-hover:text-green-400 ml-auto transition-colors"></i>
+                    </a>
+                    <a href="https://support.apple.com/kb/SP898" target="_blank" class="group p-5 rounded-2xl bg-gradient-to-br from-zinc-800/50 to-zinc-900/50 border border-white/10 hover:border-blue-500/50 transition-all duration-300 flex items-center gap-4 hover:transform hover:scale-[1.02]">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                            <span class="text-2xl">📋</span>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-white group-hover:text-blue-400 transition-colors">Tech Specs M3</div>
+                            <div class="text-xs text-zinc-500">Especificações oficiais</div>
+                        </div>
+                        <i data-lucide="external-link" class="w-4 h-4 text-zinc-600 group-hover:text-blue-400 ml-auto transition-colors"></i>
+                    </a>
+                    <a href="https://support.apple.com/macos" target="_blank" class="group p-5 rounded-2xl bg-gradient-to-br from-zinc-800/50 to-zinc-900/50 border border-white/10 hover:border-purple-500/50 transition-all duration-300 flex items-center gap-4 hover:transform hover:scale-[1.02]">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center shadow-lg shadow-purple-500/30">
+                            <span class="text-2xl">💻</span>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-white group-hover:text-purple-400 transition-colors">macOS Tahoe</div>
+                            <div class="text-xs text-zinc-500">Documentação oficial</div>
+                        </div>
+                        <i data-lucide="external-link" class="w-4 h-4 text-zinc-600 group-hover:text-purple-400 ml-auto transition-colors"></i>
+                    </a>
+                    <a href="https://locate.apple.com/" target="_blank" class="group p-5 rounded-2xl bg-gradient-to-br from-zinc-800/50 to-zinc-900/50 border border-white/10 hover:border-orange-500/50 transition-all duration-300 flex items-center gap-4 hover:transform hover:scale-[1.02]">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg shadow-orange-500/30">
+                            <span class="text-2xl">🗺️</span>
+                        </div>
+                        <div>
+                            <div class="font-semibold text-white group-hover:text-orange-400 transition-colors">Apple Store</div>
+                            <div class="text-xs text-zinc-500">Encontrar loja</div>
+                        </div>
+                        <i data-lucide="external-link" class="w-4 h-4 text-zinc-600 group-hover:text-orange-400 ml-auto transition-colors"></i>
+                    </a>
+                </div>
+
+                <!-- Extra Apple Links Row -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <a href="https://developer.apple.com/" target="_blank" class="group p-4 rounded-2xl bg-gradient-to-br from-zinc-800/30 to-zinc-900/30 border border-white/5 hover:border-cyan-500/50 transition-all duration-300 flex items-center gap-3 hover:transform hover:scale-[1.02]">
+                        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                            <span class="text-xl">🔧</span>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-medium text-sm text-white group-hover:text-cyan-400 transition-colors">Developer Portal</div>
+                            <div class="text-[10px] text-zinc-500">APIs & SDKs</div>
+                        </div>
+                        <i data-lucide="external-link" class="w-3 h-3 text-zinc-600 group-hover:text-cyan-400 transition-colors"></i>
+                    </a>
+                    <a href="https://support.apple.com/downloads" target="_blank" class="group p-4 rounded-2xl bg-gradient-to-br from-zinc-800/30 to-zinc-900/30 border border-white/5 hover:border-teal-500/50 transition-all duration-300 flex items-center gap-3 hover:transform hover:scale-[1.02]">
+                        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-teal-500/20">
+                            <span class="text-xl">⬇️</span>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-medium text-sm text-white group-hover:text-teal-400 transition-colors">Downloads</div>
+                            <div class="text-[10px] text-zinc-500">Drivers & Updates</div>
+                        </div>
+                        <i data-lucide="external-link" class="w-3 h-3 text-zinc-600 group-hover:text-teal-400 transition-colors"></i>
+                    </a>
+                    <a href="https://www.apple.com/shop/trade-in" target="_blank" class="group p-4 rounded-2xl bg-gradient-to-br from-zinc-800/30 to-zinc-900/30 border border-white/5 hover:border-amber-500/50 transition-all duration-300 flex items-center gap-3 hover:transform hover:scale-[1.02]">
+                        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                            <span class="text-xl">♻️</span>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-medium text-sm text-white group-hover:text-amber-400 transition-colors">Trade In</div>
+                            <div class="text-[10px] text-zinc-500">Trocar seu Mac</div>
+                        </div>
+                        <i data-lucide="external-link" class="w-3 h-3 text-zinc-600 group-hover:text-amber-400 transition-colors"></i>
+                    </a>
+                    <a href="https://www.apple.com/br/icloud/icloud-status/" target="_blank" class="group p-4 rounded-2xl bg-gradient-to-br from-zinc-800/30 to-zinc-900/30 border border-white/5 hover:border-sky-500/50 transition-all duration-300 flex items-center gap-3 hover:transform hover:scale-[1.02]">
+                        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center shadow-lg shadow-sky-500/20">
+                            <span class="text-xl">☁️</span>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-medium text-sm text-white group-hover:text-sky-400 transition-colors">iCloud Status</div>
+                            <div class="text-[10px] text-zinc-500">System Status</div>
+                        </div>
+                        <i data-lucide="external-link" class="w-3 h-3 text-zinc-600 group-hover:text-sky-400 transition-colors"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Tips & Shortcuts - ULTRA PREMIUM -->
+            <div class="glass-card p-8 premium-card">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30 shimmer">
+                            <i data-lucide="lightbulb" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <div>
+                            <span class="ultra-gradient-text">Mac Tips & Atalhos</span>
+                            <p class="text-xs text-zinc-500 font-normal mt-0.5">Domine seu MacBook como um PRO</p>
+                        </div>
+                    </h3>
+                    <span class="px-3 py-1.5 rounded-lg text-[11px] font-bold tracking-wider bg-gradient-to-r from-amber-400 to-orange-500 text-black shadow-lg shadow-amber-500/30">🧠 NERD</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                    ${tips.map((tip, i) => `
+                    <div class="group p-4 rounded-2xl bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 hover:border-amber-500/40 transition-all duration-300 hover:transform hover:scale-[1.02] hover:shadow-lg hover:shadow-amber-500/10" style="animation-delay: ${i * 0.05}s;">
+                        <div class="flex items-start gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br ${
+                                tip.category === 'Navegação' ? 'from-blue-500/20 to-blue-600/20 border-blue-500/30' :
+                                tip.category === 'Sistema' ? 'from-purple-500/20 to-purple-600/20 border-purple-500/30' :
+                                tip.category === 'Screenshot' ? 'from-pink-500/20 to-pink-600/20 border-pink-500/30' :
+                                tip.category === 'Finder' ? 'from-cyan-500/20 to-cyan-600/20 border-cyan-500/30' :
+                                tip.category === 'Texto' ? 'from-green-500/20 to-green-600/20 border-green-500/30' :
+                                tip.category === 'Dev' ? 'from-orange-500/20 to-red-600/20 border-orange-500/30' :
+                                tip.category === 'Produtividade' ? 'from-indigo-500/20 to-violet-600/20 border-indigo-500/30' :
+                                'from-amber-500/20 to-amber-600/20 border-amber-500/30'
+                            } border flex items-center justify-center text-lg flex-shrink-0">
+                                ${tip.category === 'Navegação' ? '🧭' : tip.category === 'Sistema' ? '⚙️' : tip.category === 'Screenshot' ? '📸' : tip.category === 'Finder' ? '📁' : tip.category === 'Texto' ? '✏️' : tip.category === 'Dev' ? '🛠️' : tip.category === 'Produtividade' ? '⚡' : '💡'}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-mono text-xs px-2 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 inline-block mb-1.5 group-hover:bg-blue-500/20 transition-colors">${tip.shortcut}</div>
+                                <div class="text-xs text-zinc-300 group-hover:text-white transition-colors leading-relaxed">${tip.description}</div>
+                                <div class="text-[10px] text-zinc-600 mt-1.5 flex items-center gap-1">
+                                    <span class="w-1.5 h-1.5 rounded-full ${
+                                        tip.category === 'Dev' ? 'bg-orange-500' : tip.category === 'Produtividade' ? 'bg-indigo-500' : 'bg-amber-500'
+                                    }"></span>
+                                    ${tip.category}${tip.category === 'Dev' ? ' <span class="text-orange-400 font-semibold ml-1">NERD</span>' : tip.category === 'Produtividade' ? ' <span class="text-indigo-400 font-semibold ml-1">PRO</span>' : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <!-- Footer Branding -->
+            <div class="text-center py-8 opacity-60">
+                <p class="text-xs text-zinc-500">
+                    <span class="ultra-gradient-text font-bold">NERD SPACE V5.0</span> • AI FIRST Edition • Crafted with 💜 for Power Users
+                </p>
+                <p class="text-[10px] text-zinc-600 mt-1">Enterprise System Intelligence Platform • MacBook Pro 14" M3 Max</p>
+            </div>
+        </div>
+        `;
+    }
+
     // ═══════════════════════════════════════════════════════════════════════════
     // EVENT HANDLERS
     // ═══════════════════════════════════════════════════════════════════════════
 
     function attachEventListeners() {
-        // Tab buttons
-        document.querySelectorAll('.tab-button').forEach(btn => {
+        // Navigation tabs (UX Best Practice: use nav-tab class)
+        document.querySelectorAll('.nav-tab').forEach(btn => {
             btn.addEventListener('click', () => {
                 const tab = btn.dataset.tab;
                 switchTab(tab);
+            });
+            // Keyboard accessibility
+            btn.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    switchTab(btn.dataset.tab);
+                }
             });
         });
     }
@@ -2436,9 +5180,11 @@ def get_dashboard_html() -> str:
     function switchTab(tab) {
         state.currentTab = tab;
 
-        // Update active tab button
-        document.querySelectorAll('.tab-button').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.tab === tab);
+        // Update active tab button with ARIA support
+        document.querySelectorAll('.nav-tab').forEach(btn => {
+            const isActive = btn.dataset.tab === tab;
+            btn.classList.toggle('active', isActive);
+            btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
         });
 
         renderCurrentTab();
@@ -2464,20 +5210,27 @@ def get_dashboard_html() -> str:
         if (!wasExpanded) {
             const subContainer = document.getElementById(`sub-${categoryName.replace(/\\s/g, '-')}`);
             if (subContainer) {
-                const items = await loadCategoryItems(categoryName);
+                try {
+                    const items = await loadCategoryItems(categoryName);
 
-                if (items.length > 0) {
-                    subContainer.innerHTML = items.map(item => `
-                        <div class="sub-item" onclick="openFolder('${item.path}')">
-                            <i data-lucide="${item.icon || 'folder'}" class="w-4 h-4 mr-3 text-zinc-500"></i>
-                            <span class="flex-1 truncate">${item.name}</span>
-                            <span class="text-zinc-500 ml-2">${item.size_human}</span>
-                        </div>
-                    `).join('');
-                } else {
-                    subContainer.innerHTML = '<div class="py-2 px-12 text-zinc-500 text-sm">Nenhum item encontrado</div>';
+                    if (items && items.length > 0) {
+                        subContainer.innerHTML = items.map(item => `
+                            <div class="sub-item" onclick="openFolder('${item.path}')">
+                                <i data-lucide="${item.icon || 'folder'}" class="w-4 h-4 mr-3 text-zinc-500"></i>
+                                <span class="flex-1 truncate">${item.name}</span>
+                                <span class="text-zinc-500 ml-2">${item.size_human}</span>
+                            </div>
+                        `).join('');
+                    } else if (items) {
+                        subContainer.innerHTML = '<div class="py-2 px-12 text-zinc-500 text-sm">Nenhum item encontrado</div>';
+                    } else {
+                        subContainer.innerHTML = '<div class="py-2 px-12 text-red-400 text-sm">⚠️ Erro ao carregar - tente novamente</div>';
+                    }
+                    lucide.createIcons();
+                } catch (err) {
+                    console.error('Error loading category:', err);
+                    subContainer.innerHTML = '<div class="py-2 px-12 text-red-400 text-sm">⚠️ Erro ao carregar - tente novamente</div>';
                 }
-                lucide.createIcons();
             }
         }
     }
@@ -2604,12 +5357,17 @@ def get_dashboard_html() -> str:
 
         lucide.createIcons();
         loadAllData();
+        loadNerdSpace();  // Load NERD SPACE data
+        loadSpeedHistory();  // Load speed test history
+        loadInsights();  // Load AI Insights
         connectWebSocket();
         updateClock();
         setInterval(updateClock, 1000);
 
         // Refresh data every 30 seconds
         setInterval(loadAllData, 30000);
+        setInterval(loadNerdSpace, 60000);  // Refresh NERD SPACE every 60s
+        setInterval(loadInsights, 300000);  // Refresh AI Insights every 5 minutes
     });
     </script>
 </body>

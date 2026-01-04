@@ -1,0 +1,27 @@
+{
+  "Sao Paulo": {
+    "timestamp": "2026-01-03T20:44:08.092482",
+    "data": {
+      "temperature_c": 27,
+      "temperature_f": 81,
+      "feels_like_c": 30,
+      "humidity": 66,
+      "description": "Partly cloudy",
+      "description_pt": "Parcialmente nublado",
+      "wind_kph": 6.0,
+      "wind_dir": "ESE",
+      "pressure_mb": 1009,
+      "uv_index": 0,
+      "visibility_km": 10,
+      "cloud_cover": 50,
+      "icon": "\u26c5",
+      "location": {
+        "city": "Sao Paulo",
+        "region": "Sao Paulo",
+        "country": "Brazil"
+      },
+      "last_updated": "2026-01-03T20:43:24.563451",
+      "source": "wttr.in"
+    }
+  }
+}

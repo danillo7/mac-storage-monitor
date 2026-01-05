@@ -146,4 +146,4 @@ O **iCloud Drive** estava configurado para baixar **todos os arquivos** localmen
 ---
 
 *Relatório gerado por Claude Code em 2026-01-03*
-*Sistema: Mac Storage Monitor v1.0*
+*Sistema: NERD SPACE V5.0*

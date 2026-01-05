@@ -1,38 +1,38 @@
 {
-  "timestamp": "2026-01-04T00:20:24.154000",
+  "timestamp": "2026-01-05T17:16:21.738308",
   "insights": [
-    {
-      "category": "network",
-      "severity": "warning",
-      "title": "Internet Lenta",
-      "description": "\u00daltimo teste: 3 Mbps. Pode afetar streaming e downloads.",
-      "action": "speedtest",
-      "action_type": "function",
-      "icon": "\ud83d\udc22",
-      "metric_value": "3",
-      "metric_label": "Mbps"
-    },
     {
       "category": "storage",
       "severity": "success",
       "title": "Storage Saud\u00e1vel",
-      "description": "202.0GB livres. Seu SSD est\u00e1 bem organizado!",
+      "description": "524.2GB livres. Seu SSD est\u00e1 bem organizado!",
       "action": null,
       "action_type": null,
       "icon": "\ud83d\udfe2",
-      "metric_value": "202.0GB",
+      "metric_value": "524.2GB",
       "metric_label": "livres"
     },
     {
       "category": "battery",
       "severity": "success",
       "title": "Bateria Excelente",
-      "description": "Sa\u00fade em 100% com 0 ciclos. Excelente condi\u00e7\u00e3o!",
+      "description": "Sa\u00fade em 100% com 9 ciclos. Excelente condi\u00e7\u00e3o!",
       "action": null,
       "action_type": null,
       "icon": "\ud83d\udc9a",
       "metric_value": "100%",
       "metric_label": "sa\u00fade"
+    },
+    {
+      "category": "network",
+      "severity": "success",
+      "title": "Internet R\u00e1pida",
+      "description": "\u00daltimo teste: 556 Mbps download, 22ms lat\u00eancia.",
+      "action": null,
+      "action_type": null,
+      "icon": "\ud83d\ude80",
+      "metric_value": "556",
+      "metric_label": "Mbps"
     }
   ]
 }

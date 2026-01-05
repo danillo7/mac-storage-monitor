@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# MAC STORAGE MONITOR - Script de Inicialização
+# NERD SPACE V5.0 - Script de Inicialização
 # =============================================================================
 
 cd "$(dirname "$0")"
@@ -20,7 +20,7 @@ pip install -q -r requirements.txt
 
 # Iniciar servidor
 echo ""
-echo "🚀 Iniciando Mac Monitor Pro v2.0..."
+echo "🚀 Iniciando NERD SPACE V5.0..."
 echo "════════════════════════════════════════════════════════════"
 echo "📊 LOCAL:      http://localhost:8888"
 echo "📊 REDE LOCAL: http://$(ipconfig getifaddr en0 2>/dev/null || echo 'N/A'):8888"

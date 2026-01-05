@@ -1,11 +1,11 @@
-# 🖥️ Mac Monitor Pro v2.0
+# 🖥️ NERD SPACE V5.0 - AI FIRST Edition
 
-Sistema completo de monitoramento para macOS: armazenamento, CPU, RAM, processos e iCloud.
+Sistema completo de monitoramento para macOS: armazenamento, CPU, RAM, processos, rede, clima e mais.
 
 ## 🚀 Instalação Rápida
 
 ```bash
-cd ~/Developer/mac-storage-monitor
+cd ~/Developer/nerd-space
 chmod +x start.sh liberar_espaco_icloud.sh
 ./start.sh
 ```

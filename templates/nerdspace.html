@@ -14,11 +14,23 @@
                 🚀 NERD SPACE
             </div>
             <div class="nav-tabs" id="nav-tabs">
-                <button class="nav-tab active" data-tab="dashboard">📊 Dashboard</button>
+                <button class="nav-tab active" data-tab="nerdspace">🚀 NERD SPACE</button>
+                <button class="nav-tab" data-tab="dashboard">📊 Visão Geral</button>
                 <button class="nav-tab" data-tab="claude">🤖 Claude Max <span class="badge-new">20x</span></button>
                 <button class="nav-tab" data-tab="storage">💾 Storage</button>
-                <button class="nav-tab" data-tab="network">🌐 Network</button>
-                <button class="nav-tab" data-tab="dev">🛠️ Dev</button>
+                <button class="nav-tab" data-tab="tips">⌨️ Mac Tips <span class="badge-new">64</span></button>
+            </div>
+            <!-- Header Icons -->
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <button id="header-speedtest" title="Speed Test" style="background: rgba(255,255,255,0.1); border: none; padding: 0.5rem; border-radius: 0.5rem; cursor: pointer; color: var(--text-secondary); font-size: 1.25rem; transition: all 0.2s;">
+                    📶 <span id="header-speed-value" style="font-size: 0.75rem; color: var(--accent-green);">--</span>
+                </button>
+                <button id="header-trash" title="Lixeira" style="background: rgba(255,255,255,0.1); border: none; padding: 0.5rem; border-radius: 0.5rem; cursor: pointer; color: var(--text-secondary); font-size: 1.25rem; transition: all 0.2s;">
+                    🗑️ <span id="header-trash-count" style="font-size: 0.75rem; color: var(--text-muted);">--</span>
+                </button>
+                <div id="header-clock" style="font-weight: 600; color: var(--text-primary); font-size: 0.875rem;">
+                    --:--
+                </div>
             </div>
         </div>
     </nav>
@@ -26,8 +38,93 @@
     <!-- Main Content -->
     <main style="padding: 1.5rem; max-width: 1400px; margin: 0 auto;">
 
+        <!-- Tab: NERD SPACE Home -->
+        <section id="tab-nerdspace" class="tab-content">
+            <!-- Hero Section -->
+            <div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1)); border: 1px solid rgba(59, 130, 246, 0.2);">
+                <div style="text-align: center; padding: 2rem 0;">
+                    <div style="font-size: 3rem; margin-bottom: 0.5rem;">🚀</div>
+                    <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; background: linear-gradient(90deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">NERD SPACE V5.0</h1>
+                    <p style="color: var(--text-secondary); font-size: 1rem; margin-bottom: 1rem;">Seu hub de comando premium para controle total do seu MacBook Pro.</p>
+                    <div style="display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
+                        <span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem;">M3 Max</span>
+                        <span class="badge" style="background: rgba(139, 92, 246, 0.2); color: #a78bfa; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem;">36GB RAM</span>
+                        <span class="badge" style="background: rgba(34, 197, 94, 0.2); color: #4ade80; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem;" id="macos-badge">macOS Tahoe 26.2</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats Grid -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+                <div class="card" style="text-align: center;">
+                    <div style="font-size: 2rem; margin-bottom: 0.25rem;">⏱️</div>
+                    <div style="font-size: 1.25rem; font-weight: 700;" id="home-uptime">--</div>
+                    <div style="color: var(--text-muted); font-size: 0.75rem;">Uptime</div>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <div style="font-size: 2rem; margin-bottom: 0.25rem;">💾</div>
+                    <div style="font-size: 1.25rem; font-weight: 700;" id="home-storage">--</div>
+                    <div style="color: var(--text-muted); font-size: 0.75rem;">Storage Livre</div>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <div style="font-size: 2rem; margin-bottom: 0.25rem;">🖥️</div>
+                    <div style="font-size: 1.25rem; font-weight: 700;" id="home-displays">--</div>
+                    <div style="color: var(--text-muted); font-size: 0.75rem;">Displays</div>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <div style="font-size: 2rem; margin-bottom: 0.25rem;">🤖</div>
+                    <div style="font-size: 1.25rem; font-weight: 700;" id="home-claude">--</div>
+                    <div style="color: var(--text-muted); font-size: 0.75rem;">Claude 5h</div>
+                </div>
+            </div>
+
+            <!-- AI Insights -->
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <div class="card-header">
+                    <div class="card-title"><span style="margin-right: 0.5rem;">🧠</span> AI Insights</div>
+                    <button id="refresh-insights" style="background: rgba(139, 92, 246, 0.2); color: #a78bfa; border: none; padding: 0.375rem 0.75rem; border-radius: 0.375rem; cursor: pointer; font-size: 0.75rem;">↻ Refresh</button>
+                </div>
+                <div id="ai-insights-container">
+                    <div class="skeleton skeleton-block" style="height: 100px;"></div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span style="margin-right: 0.5rem;">⚡</span> Ações Rápidas</div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.75rem;">
+                    <button onclick="document.querySelector('[data-tab=dashboard]').click()" style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); padding: 1rem; border-radius: 0.5rem; cursor: pointer; text-align: center; transition: all 0.2s;">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">📊</div>
+                        <div style="color: var(--text-primary); font-size: 0.75rem;">Dashboard</div>
+                    </button>
+                    <button onclick="document.querySelector('[data-tab=claude]').click()" style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); padding: 1rem; border-radius: 0.5rem; cursor: pointer; text-align: center; transition: all 0.2s;">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">🤖</div>
+                        <div style="color: var(--text-primary); font-size: 0.75rem;">Claude Max</div>
+                    </button>
+                    <button onclick="document.querySelector('[data-tab=storage]').click()" style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); padding: 1rem; border-radius: 0.5rem; cursor: pointer; text-align: center; transition: all 0.2s;">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">💾</div>
+                        <div style="color: var(--text-primary); font-size: 0.75rem;">Storage</div>
+                    </button>
+                    <button onclick="document.querySelector('[data-tab=tips]').click()" style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); padding: 1rem; border-radius: 0.5rem; cursor: pointer; text-align: center; transition: all 0.2s;">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">⌨️</div>
+                        <div style="color: var(--text-primary); font-size: 0.75rem;">Mac Tips</div>
+                    </button>
+                    <button id="action-speedtest" style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); padding: 1rem; border-radius: 0.5rem; cursor: pointer; text-align: center; transition: all 0.2s;">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">📶</div>
+                        <div style="color: var(--text-primary); font-size: 0.75rem;">Speed Test</div>
+                    </button>
+                    <button id="action-trash" style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); padding: 1rem; border-radius: 0.5rem; cursor: pointer; text-align: center; transition: all 0.2s;">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">🗑️</div>
+                        <div style="color: var(--text-primary); font-size: 0.75rem;">Lixeira</div>
+                    </button>
+                </div>
+            </div>
+        </section>
+
         <!-- Tab: Dashboard -->
-        <section id="tab-dashboard" class="tab-content">
+        <section id="tab-dashboard" class="tab-content" style="display: none;">
             <!-- System Info Row -->
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
                 <!-- macOS Card -->
@@ -126,6 +223,38 @@
             </div>
         </section>
 
+        <!-- Tab: Mac Tips -->
+        <section id="tab-tips" class="tab-content" style="display: none;">
+            <!-- Tips Header -->
+            <div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(251, 146, 60, 0.1), rgba(249, 115, 22, 0.1)); border: 1px solid rgba(251, 146, 60, 0.2);">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="font-size: 2.5rem;">⌨️</div>
+                    <div>
+                        <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem;">Mac Tips & Atalhos</h2>
+                        <p style="color: var(--text-secondary); font-size: 0.875rem;">Domine seu Mac com <span id="tips-count" style="color: #fb923c; font-weight: 600;">64</span> dicas essenciais organizadas por categoria.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Filter -->
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem;" id="tips-categories">
+                <button class="tips-category active" data-category="all" style="background: rgba(251, 146, 60, 0.2); color: #fb923c; border: none; padding: 0.5rem 1rem; border-radius: 9999px; cursor: pointer; font-size: 0.875rem; font-weight: 500; transition: all 0.2s;">🎯 Todos</button>
+                <button class="tips-category" data-category="Sistema" style="background: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border-subtle); padding: 0.5rem 1rem; border-radius: 9999px; cursor: pointer; font-size: 0.875rem; transition: all 0.2s;">⚙️ Sistema</button>
+                <button class="tips-category" data-category="Navegação" style="background: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border-subtle); padding: 0.5rem 1rem; border-radius: 9999px; cursor: pointer; font-size: 0.875rem; transition: all 0.2s;">🧭 Navegação</button>
+                <button class="tips-category" data-category="Finder" style="background: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border-subtle); padding: 0.5rem 1rem; border-radius: 9999px; cursor: pointer; font-size: 0.875rem; transition: all 0.2s;">📁 Finder</button>
+                <button class="tips-category" data-category="Texto" style="background: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border-subtle); padding: 0.5rem 1rem; border-radius: 9999px; cursor: pointer; font-size: 0.875rem; transition: all 0.2s;">📝 Texto</button>
+                <button class="tips-category" data-category="Screenshot" style="background: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border-subtle); padding: 0.5rem 1rem; border-radius: 9999px; cursor: pointer; font-size: 0.875rem; transition: all 0.2s;">📸 Screenshot</button>
+                <button class="tips-category" data-category="Produtividade" style="background: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border-subtle); padding: 0.5rem 1rem; border-radius: 9999px; cursor: pointer; font-size: 0.875rem; transition: all 0.2s;">🚀 Produtividade</button>
+                <button class="tips-category" data-category="Dev" style="background: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border-subtle); padding: 0.5rem 1rem; border-radius: 9999px; cursor: pointer; font-size: 0.875rem; transition: all 0.2s;">💻 Dev</button>
+            </div>
+
+            <!-- Tips Grid -->
+            <div id="tips-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                <div class="skeleton skeleton-block" style="height: 400px;"></div>
+                <div class="skeleton skeleton-block" style="height: 400px;"></div>
+            </div>
+        </section>
+
     </main>
 
     <!-- Toast Container -->
@@ -161,17 +290,6 @@
         } catch (e) {
             console.error('API Error:', endpoint, e);
             return null;
-        }
-    }
-
-    // Load data for each tab
-    async function loadTabData(tabId) {
-        switch(tabId) {
-            case 'dashboard': loadDashboard(); break;
-            case 'claude': loadClaude(); break;
-            case 'storage': loadStorage(); break;
-            case 'network': loadNetwork(); break;
-            case 'dev': loadDevTools(); break;
         }
     }
 
@@ -432,8 +550,218 @@
         }
     }
 
-    // Initial load
-    loadDashboard();
+    // NERD SPACE Home
+    async function loadNerdSpace() {
+        // Uptime
+        const uptime = await api('/uptime');
+        if (uptime) {
+            document.getElementById('home-uptime').textContent = uptime.uptime_formatted;
+        }
+
+        // Storage
+        const storage = await api('/storage/v2');
+        if (storage) {
+            document.getElementById('home-storage').textContent = storage.formatted.free;
+        }
+
+        // Displays
+        const displays = await api('/displays');
+        if (displays) {
+            document.getElementById('home-displays').textContent = displays.length;
+        }
+
+        // Claude
+        const claude = await api('/claude-usage');
+        if (claude) {
+            document.getElementById('home-claude').textContent = claude.usage.window_5h.percent.toFixed(0) + '%';
+        }
+
+        // AI Insights
+        loadInsights();
+    }
+
+    // AI Insights
+    async function loadInsights() {
+        const data = await api('/insights');
+        const container = document.getElementById('ai-insights-container');
+
+        if (data && data.insights && data.insights.length > 0) {
+            container.innerHTML = `
+                <div style="display: grid; gap: 0.75rem;">
+                    ${data.insights.slice(0, 3).map(insight => `
+                        <div style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; background: var(--bg-secondary); border-radius: 0.5rem; border-left: 3px solid ${insight.severity === 'warning' ? '#f59e0b' : insight.severity === 'success' ? '#22c55e' : '#3b82f6'};">
+                            <span style="font-size: 1.25rem;">${insight.icon || (insight.severity === 'warning' ? '⚠️' : insight.severity === 'success' ? '✅' : '💡')}</span>
+                            <div>
+                                <div style="font-weight: 500; margin-bottom: 0.25rem;">${insight.title}</div>
+                                <div style="color: var(--text-secondary); font-size: 0.875rem;">${insight.description}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        } else {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">🧠</div>
+                    <div>Nenhum insight disponível no momento</div>
+                </div>
+            `;
+        }
+    }
+
+    document.getElementById('refresh-insights').addEventListener('click', loadInsights);
+
+    // Mac Tips
+    let allTips = [];
+    let currentCategory = 'all';
+
+    async function loadTips() {
+        const data = await api('/tips');
+        if (data && data.tips) {
+            allTips = data.tips;
+            document.getElementById('tips-count').textContent = allTips.length;
+            renderTips();
+        }
+    }
+
+    function renderTips() {
+        const grid = document.getElementById('tips-grid');
+        const filtered = currentCategory === 'all'
+            ? allTips
+            : allTips.filter(t => t.category === currentCategory);
+
+        grid.innerHTML = filtered.map(tip => `
+            <div class="card tip-card" style="padding: 1rem; cursor: default; transition: all 0.2s; border: 1px solid var(--border-subtle);">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                    <span style="font-size: 1.5rem;">${getCategoryIcon(tip.category)}</span>
+                    <span style="background: rgba(251, 146, 60, 0.15); color: #fb923c; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.7rem; text-transform: uppercase;">${tip.category}</span>
+                </div>
+                <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">${tip.title}</h3>
+                <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.75rem;">${tip.description}</p>
+                <div style="background: var(--bg-tertiary); padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-family: monospace; font-size: 0.875rem; color: var(--accent-green);">
+                    ${tip.shortcut || tip.command || '—'}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function getCategoryIcon(category) {
+        const icons = {
+            'Navegação': '🧭',
+            'Finder': '📁',
+            'Texto': '📝',
+            'Screenshot': '📸',
+            'Sistema': '⚙️',
+            'Produtividade': '🚀',
+            'Dev': '💻',
+            'Terminal': '💻'
+        };
+        return icons[category] || '💡';
+    }
+
+    // Category filter
+    document.querySelectorAll('.tips-category').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tips-category').forEach(b => {
+                b.style.background = 'var(--bg-secondary)';
+                b.style.color = 'var(--text-secondary)';
+                b.style.border = '1px solid var(--border-subtle)';
+                b.classList.remove('active');
+            });
+            btn.style.background = 'rgba(251, 146, 60, 0.2)';
+            btn.style.color = '#fb923c';
+            btn.style.border = 'none';
+            btn.classList.add('active');
+            currentCategory = btn.dataset.category;
+            renderTips();
+        });
+    });
+
+    // Header Clock
+    function updateClock() {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('header-clock').textContent = timeStr;
+    }
+    updateClock();
+    setInterval(updateClock, 60000);
+
+    // Header Speed Test
+    async function updateHeaderSpeed() {
+        const data = await api('/speedtest/last');
+        if (data && data.download_mbps) {
+            document.getElementById('header-speed-value').textContent = data.download_mbps + ' Mbps';
+        }
+    }
+    updateHeaderSpeed();
+
+    document.getElementById('header-speedtest').addEventListener('click', async () => {
+        const btn = document.getElementById('header-speedtest');
+        const valueEl = document.getElementById('header-speed-value');
+        btn.disabled = true;
+        valueEl.textContent = '...';
+        valueEl.style.color = 'var(--text-muted)';
+
+        try {
+            const res = await fetch('/api/speedtest', { method: 'POST' });
+            const data = await res.json();
+            if (data.download_mbps) {
+                valueEl.textContent = data.download_mbps + ' Mbps';
+                valueEl.style.color = 'var(--accent-green)';
+            }
+        } catch (e) {
+            valueEl.textContent = 'Erro';
+            valueEl.style.color = '#ef4444';
+        } finally {
+            btn.disabled = false;
+        }
+    });
+
+    // Header Trash
+    async function updateHeaderTrash() {
+        const data = await api('/trash');
+        if (data) {
+            document.getElementById('header-trash-count').textContent = data.total_items || 0;
+        }
+    }
+    updateHeaderTrash();
+
+    document.getElementById('header-trash').addEventListener('click', async () => {
+        const data = await api('/trash');
+        if (data && data.total_items > 0) {
+            if (confirm(`Esvaziar lixeira? (${data.total_items} itens, ${data.total_size_human})`)) {
+                await fetch('/api/trash/empty', { method: 'POST' });
+                updateHeaderTrash();
+            }
+        } else {
+            alert('Lixeira vazia!');
+        }
+    });
+
+    // Action buttons
+    document.getElementById('action-speedtest')?.addEventListener('click', () => {
+        document.getElementById('header-speedtest').click();
+    });
+
+    document.getElementById('action-trash')?.addEventListener('click', () => {
+        document.getElementById('header-trash').click();
+    });
+
+    // Update loadTabData to include new tabs
+    async function loadTabData(tabId) {
+        switch(tabId) {
+            case 'nerdspace': loadNerdSpace(); break;
+            case 'dashboard': loadDashboard(); break;
+            case 'claude': loadClaude(); break;
+            case 'storage': loadStorage(); break;
+            case 'network': loadNetwork(); break;
+            case 'dev': loadDevTools(); break;
+            case 'tips': loadTips(); break;
+        }
+    }
+
+    // Initial load - Start on NERD SPACE home
+    loadNerdSpace();
     </script>
 </body>
 </html>

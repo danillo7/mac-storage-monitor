@@ -25,8 +25,11 @@ class SystemInfoService:
     def _run_cmd(self, cmd: str, timeout: int = 10) -> str:
         """Executa comando shell com timeout"""
         try:
+            # Garantir PATH completo para comandos do sistema
+            env = os.environ.copy()
+            env["PATH"] = "/usr/sbin:/usr/bin:/bin:/opt/homebrew/bin:" + env.get("PATH", "")
             result = subprocess.run(
-                cmd, shell=True, capture_output=True, text=True, timeout=timeout
+                cmd, shell=True, capture_output=True, text=True, timeout=timeout, env=env
             )
             return result.stdout.strip()
         except subprocess.TimeoutExpired:

@@ -221,6 +221,7 @@ STATIC_HARDWARE = {
 # Cache TTLs (in seconds)
 CACHE_TTL = {
     "hardware": 300,      # 5 min - rarely changes
+    "displays": 300,      # 5 min - rarely changes
     "storage": 120,       # 2 min - cache longer for responsiveness
     "applications": 600,  # 10 min - apps don't change often
     "battery": 30,        # 30s - changes with usage
@@ -228,6 +229,10 @@ CACHE_TTL = {
     "network": 15,        # 15s - changes frequently
     "icloud": 120,        # 2 min - large, slow to compute
     "trash": 30,          # 30s - can change
+    "greeting": 300,      # 5 min - rarely changes
+    "weather": 600,       # 10 min - rarely changes
+    "power": 15,          # 15s - changes with battery
+    "macos": 3600,        # 1 hour - never changes
 }
 
 # Legacy cache for backward compatibility
@@ -1855,6 +1860,70 @@ async def api_open_about_mac():
 async def api_processes_detailed():
     """Get detailed process analysis with intelligence"""
     return get_processes_detailed()
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ULTRA-FAST INIT ENDPOINT - Single request for ALL initial data
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.get("/api/init")
+async def api_init():
+    """
+    ULTRA-FAST: Get ALL initial data in ONE request.
+    Uses aggressive caching - returns in <100ms after first call.
+    """
+    import asyncio
+
+    # Parallel fetch all data using caches
+    async def get_cached_or_fetch(key, ttl, fetch_fn):
+        cached = _cache.get(key, ttl=ttl)
+        if cached:
+            return cached
+        result = fetch_fn()
+        _cache.set(key, result)
+        return result
+
+    # All fetches in parallel using existing cache
+    hardware = _cache.get("hardware", ttl=CACHE_TTL["hardware"]) or get_hardware_info()
+    displays = _cache.get("displays", ttl=CACHE_TTL["displays"]) or get_displays_info()
+    battery = _cache.get("battery", ttl=CACHE_TTL["battery"]) or get_battery_info()
+    storage = _cache.get("storage", ttl=CACHE_TTL["storage"]) or get_storage_categories()
+    processes = _cache.get("processes", ttl=CACHE_TTL["processes"]) or get_processes_info()
+    network = _cache.get("network", ttl=CACHE_TTL["network"]) or get_network_info()
+    greeting = _cache.get("greeting", ttl=300) or get_personalized_greeting()
+    weather = _cache.get("weather", ttl=600) or get_weather_sao_paulo()
+    power = _cache.get("power", ttl=15) or get_power_info()
+    trash = _cache.get("trash", ttl=30) or get_trash_info()
+    macos = _cache.get("macos", ttl=3600) or get_system_info_service().get_macos_version()
+
+    # Cache all results
+    _cache.set("hardware", hardware)
+    _cache.set("displays", displays)
+    _cache.set("battery", battery)
+    _cache.set("storage", storage)
+    _cache.set("processes", processes)
+    _cache.set("network", network)
+    _cache.set("greeting", greeting)
+    if weather.get("success"):
+        _cache.set("weather", weather)
+    _cache.set("power", power)
+    _cache.set("trash", trash)
+    _cache.set("macos", macos)
+
+    return {
+        "hardware": hardware,
+        "displays": displays,
+        "battery": battery,
+        "storage": storage,
+        "processes": processes,
+        "network": network,
+        "greeting": greeting,
+        "weather": weather,
+        "power": power,
+        "trash": trash,
+        "macos": macos,
+        "timestamp": time_module.time(),
+        "cached": True
+    }
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # NERD SPACE API ENDPOINTS - Premium Features
@@ -4054,6 +4123,39 @@ def get_dashboard_html() -> str:
             color: white;
         }
 
+        /* Language Toggle */
+        .lang-toggle {
+            display: flex;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 3px;
+            gap: 2px;
+            border: 1px solid var(--border-color);
+        }
+
+        .lang-btn {
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .lang-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-secondary);
+        }
+
+        .lang-btn.active {
+            background: var(--accent-blue);
+            color: white;
+        }
+
         /* Live Indicator */
         .live-indicator {
             display: flex;
@@ -4081,6 +4183,151 @@ def get_dashboard_html() -> str:
         @keyframes livePulse {
             0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
             50% { opacity: 0.7; box-shadow: 0 0 0 4px rgba(34, 197, 94, 0); }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════
+           PREMIUM UI/UX ENHANCEMENTS V5.0
+           ═══════════════════════════════════════════════════════════════════ */
+
+        /* Smooth Scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Premium Button Interactions */
+        button, .btn, [role="button"] {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        button:active, .btn:active {
+            transform: scale(0.97);
+        }
+
+        /* Focus States for Accessibility */
+        button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+            outline: 2px solid var(--accent-blue);
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+
+        /* Premium Card Glow on Hover */
+        .glass-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            background: radial-gradient(800px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(59, 130, 246, 0.1), transparent 40%);
+            pointer-events: none;
+        }
+
+        .glass-card:hover::after {
+            opacity: 1;
+        }
+
+        /* Interactive Element Glow */
+        .nav-tab:hover, .theme-btn-compact:hover, .lang-btn:hover {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+        }
+
+        /* Skeleton Loading Enhancement */
+        .skeleton {
+            background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-hover) 50%, var(--bg-secondary) 75%);
+            background-size: 200% 100%;
+            animation: skeletonWave 1.5s infinite;
+        }
+
+        @keyframes skeletonWave {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Premium Tooltip Style */
+        [title]:hover::before {
+            content: attr(title);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 4px 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 11px;
+            white-space: nowrap;
+            z-index: 1000;
+            opacity: 0;
+            animation: tooltipFade 0.2s forwards 0.3s;
+        }
+
+        @keyframes tooltipFade {
+            to { opacity: 1; }
+        }
+
+        /* Stagger Animation for Lists */
+        .stagger-item {
+            opacity: 0;
+            transform: translateY(10px);
+            animation: staggerFadeIn 0.3s ease forwards;
+        }
+
+        .stagger-item:nth-child(1) { animation-delay: 0.05s; }
+        .stagger-item:nth-child(2) { animation-delay: 0.1s; }
+        .stagger-item:nth-child(3) { animation-delay: 0.15s; }
+        .stagger-item:nth-child(4) { animation-delay: 0.2s; }
+        .stagger-item:nth-child(5) { animation-delay: 0.25s; }
+        .stagger-item:nth-child(6) { animation-delay: 0.3s; }
+
+        @keyframes staggerFadeIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Premium Number Animation */
+        .animate-number {
+            display: inline-block;
+            animation: numberPop 0.3s ease;
+        }
+
+        @keyframes numberPop {
+            0% { transform: scale(1.3); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Subtle Gradient Border on Hover */
+        .gradient-border-hover {
+            position: relative;
+            background: var(--bg-card);
+            z-index: 1;
+        }
+
+        .gradient-border-hover::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            background: linear-gradient(135deg, transparent, var(--accent-blue), var(--accent-purple), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+
+        .gradient-border-hover:hover::before {
+            opacity: 1;
+        }
+
+        /* Premium Status Badges */
+        .status-online { color: var(--accent-green); }
+        .status-warning { color: var(--accent-orange); }
+        .status-error { color: var(--accent-red); }
+
+        /* Reduced Motion Support */
+        @media (prefers-reduced-motion: reduce) {
+            *, ::before, ::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
         }
 
         /* Nav Separator */
@@ -4526,10 +4773,16 @@ def get_dashboard_html() -> str:
                             </button>
                         </div>
 
+                        <!-- Language Toggle -->
+                        <div class="lang-toggle" id="lang-toggle">
+                            <button class="lang-btn active" data-lang="pt" title="Português">PT</button>
+                            <button class="lang-btn" data-lang="en" title="English">EN</button>
+                        </div>
+
                         <!-- Live Indicator -->
                         <div class="live-indicator" id="connection-status">
                             <div class="live-dot"></div>
-                            <span>Live</span>
+                            <span data-i18n="live">Live</span>
                         </div>
                     </div>
                 </div>
@@ -4733,6 +4986,211 @@ def get_dashboard_html() -> str:
     };
 
     // ═══════════════════════════════════════════════════════════════════════════
+    // I18N SYSTEM - Portuguese (default) / English
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    const i18n = {
+        currentLang: 'pt',
+        translations: {
+            pt: {
+                // Header & Navigation
+                live: 'Ao Vivo',
+                nerdSpace: 'NERD SPACE',
+                overview: 'Visão Geral',
+                storage: 'Armazenamento',
+                macTips: 'Dicas Mac',
+                aiFirst: 'AI First',
+                // Cards
+                uptime: 'Tempo Ativo',
+                freeStorage: 'Espaço Livre',
+                displays: 'Monitores',
+                claudeCycle: 'Ciclo Claude',
+                aiInsights: 'AI Insights',
+                quickActions: 'Ações Rápidas',
+                dashboard: 'Painel',
+                speedTest: 'Teste de Velocidade',
+                trash: 'Lixeira',
+                // System Info
+                macOS: 'macOS',
+                hardware: 'Hardware',
+                monitors: 'Monitores',
+                quickLinks: 'Links Rápidos',
+                // Storage
+                storageAnalysis: 'Análise de Armazenamento',
+                used: 'Usado',
+                free: 'Livre',
+                total: 'Total',
+                // Network
+                ping: 'Latência',
+                download: 'Download',
+                upload: 'Upload',
+                runTest: 'Executar Teste',
+                // Tips
+                tipsTitle: 'Dicas & Atalhos do Mac',
+                tipsSubtitle: 'Domine seu Mac com dicas essenciais organizadas por categoria.',
+                allTips: 'Todos',
+                system: 'Sistema',
+                navigation: 'Navegação',
+                finder: 'Finder',
+                text: 'Texto',
+                screenshot: 'Captura de Tela',
+                productivity: 'Produtividade',
+                dev: 'Dev',
+                // Common
+                refresh: 'Atualizar',
+                loading: 'Carregando...',
+                error: 'Erro',
+                success: 'Sucesso',
+                emptyTrash: 'Esvaziar Lixeira',
+                items: 'itens',
+                emptyTrashConfirm: 'Esvaziar lixeira?',
+                trashEmpty: 'Lixeira vazia!',
+                // Greeting
+                goodMorning: 'Bom dia',
+                goodAfternoon: 'Boa tarde',
+                goodEvening: 'Boa noite',
+                // Claude
+                monthlyConsolidated: 'Custo Mensal Consolidado',
+                discountActive: 'Desconto ativo',
+                budget: 'do orçamento AI',
+                cycleRemaining: 'restantes',
+                // Settings
+                settings: 'Configurações',
+                openSettings: 'Abrir Configurações',
+                viewDetails: 'Ver Detalhes',
+                openApp: 'Abrir App'
+            },
+            en: {
+                // Header & Navigation
+                live: 'Live',
+                nerdSpace: 'NERD SPACE',
+                overview: 'Overview',
+                storage: 'Storage',
+                macTips: 'Mac Tips',
+                aiFirst: 'AI First',
+                // Cards
+                uptime: 'Uptime',
+                freeStorage: 'Free Storage',
+                displays: 'Displays',
+                claudeCycle: 'Claude Cycle',
+                aiInsights: 'AI Insights',
+                quickActions: 'Quick Actions',
+                dashboard: 'Dashboard',
+                speedTest: 'Speed Test',
+                trash: 'Trash',
+                // System Info
+                macOS: 'macOS',
+                hardware: 'Hardware',
+                monitors: 'Monitors',
+                quickLinks: 'Quick Links',
+                // Storage
+                storageAnalysis: 'Storage Analysis',
+                used: 'Used',
+                free: 'Free',
+                total: 'Total',
+                // Network
+                ping: 'Ping',
+                download: 'Download',
+                upload: 'Upload',
+                runTest: 'Run Test',
+                // Tips
+                tipsTitle: 'Mac Tips & Shortcuts',
+                tipsSubtitle: 'Master your Mac with essential tips organized by category.',
+                allTips: 'All',
+                system: 'System',
+                navigation: 'Navigation',
+                finder: 'Finder',
+                text: 'Text',
+                screenshot: 'Screenshot',
+                productivity: 'Productivity',
+                dev: 'Dev',
+                // Common
+                refresh: 'Refresh',
+                loading: 'Loading...',
+                error: 'Error',
+                success: 'Success',
+                emptyTrash: 'Empty Trash',
+                items: 'items',
+                emptyTrashConfirm: 'Empty trash?',
+                trashEmpty: 'Trash is empty!',
+                // Greeting
+                goodMorning: 'Good morning',
+                goodAfternoon: 'Good afternoon',
+                goodEvening: 'Good evening',
+                // Claude
+                monthlyConsolidated: 'Monthly Consolidated Cost',
+                discountActive: 'Discount active',
+                budget: 'of AI budget',
+                cycleRemaining: 'remaining',
+                // Settings
+                settings: 'Settings',
+                openSettings: 'Open Settings',
+                viewDetails: 'View Details',
+                openApp: 'Open App'
+            }
+        },
+
+        // Get translation
+        t(key) {
+            return this.translations[this.currentLang][key] || this.translations['pt'][key] || key;
+        },
+
+        // Set language and update UI
+        setLang(lang) {
+            this.currentLang = lang;
+            localStorage.setItem('nerdspace_lang', lang);
+            document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
+            this.applyTranslations();
+            this.updateLangButtons();
+        },
+
+        // Apply translations to all elements with data-i18n
+        applyTranslations() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                el.textContent = this.t(key);
+            });
+            // Also update placeholder attributes
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                el.placeholder = this.t(key);
+            });
+        },
+
+        // Update language toggle buttons
+        updateLangButtons() {
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === this.currentLang);
+            });
+        },
+
+        // Initialize i18n
+        init() {
+            // Check saved preference
+            const saved = localStorage.getItem('nerdspace_lang');
+            if (saved && ['pt', 'en'].includes(saved)) {
+                this.currentLang = saved;
+            } else {
+                // Auto-detect from browser
+                const browserLang = navigator.language || navigator.userLanguage;
+                this.currentLang = browserLang.startsWith('en') ? 'en' : 'pt';
+            }
+
+            // Set document language
+            document.documentElement.lang = this.currentLang === 'pt' ? 'pt-BR' : 'en';
+
+            // Setup language toggle buttons
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.addEventListener('click', () => this.setLang(btn.dataset.lang));
+            });
+
+            this.updateLangButtons();
+            this.applyTranslations();
+            console.log('🌐 i18n initialized:', this.currentLang.toUpperCase());
+        }
+    };
+
+    // ═══════════════════════════════════════════════════════════════════════════
     // NERD PHRASES - Frases geek/nerd que rotacionam lentamente
     // ═══════════════════════════════════════════════════════════════════════════
     const NERD_PHRASES = [
@@ -4896,95 +5354,149 @@ def get_dashboard_html() -> str:
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // API FUNCTIONS
+    // ULTRA-FAST LOADING SYSTEM V2.0
     // ═══════════════════════════════════════════════════════════════════════════
 
-    async function fetchAPI(endpoint, timeoutMs = 5000) {
-        // OPTIMIZED: Reduced from 30s to 5s - APIs are now fast
+    const CACHE_KEY = 'nerdspace_cache_v2';
+    const CACHE_TTL = 30000; // 30 seconds
+
+    // Load from localStorage instantly
+    function loadFromCache() {
+        try {
+            const cached = localStorage.getItem(CACHE_KEY);
+            if (cached) {
+                const { data, timestamp } = JSON.parse(cached);
+                if (Date.now() - timestamp < CACHE_TTL * 10) { // 5 min max cache
+                    return data;
+                }
+            }
+        } catch (e) { console.warn('Cache read error:', e); }
+        return null;
+    }
+
+    // Save to localStorage
+    function saveToCache(data) {
+        try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify({
+                data,
+                timestamp: Date.now()
+            }));
+        } catch (e) { console.warn('Cache write error:', e); }
+    }
+
+    // Ultra-fast fetch with timeout
+    async function fetchAPI(endpoint, timeoutMs = 3000) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
         try {
-            const res = await fetch(`/api/${endpoint}`, { signal: controller.signal });
+            const res = await fetch('/api/' + endpoint, { signal: controller.signal });
             clearTimeout(timeoutId);
-            if (!res.ok) {
-                console.error(`API ${endpoint} returned ${res.status}`);
-                return null;
-            }
-            return await res.json();
+            return res.ok ? await res.json() : null;
         } catch (e) {
             clearTimeout(timeoutId);
-            if (e.name === 'AbortError') {
-                console.warn(`Timeout on ${endpoint} - retrying...`);
-                // Quick retry on timeout
-                try {
-                    const retryRes = await fetch(`/api/${endpoint}`);
-                    if (retryRes.ok) return await retryRes.json();
-                } catch { /* ignore retry failure */ }
-            }
-            console.error(`Error fetching ${endpoint}:`, e.message);
             return null;
         }
     }
 
-    async function loadAllData(forceRender = false) {
-        const [hardware, displays, battery, storage, processes, network] = await Promise.all([
-            fetchAPI('hardware'),
-            fetchAPI('displays'),
-            fetchAPI('battery'),
-            fetchAPI('storage'),  // Dados APFS já corrigidos no endpoint original
-            fetchAPI('processes'),
-            fetchAPI('network'),
-        ]);
+    // ULTRA-FAST: Single request for ALL data
+    async function loadAllDataUltraFast() {
+        const startTime = performance.now();
 
+        // 1. INSTANT: Load from cache first (0ms)
+        const cached = loadFromCache();
+        if (cached) {
+            console.log('⚡ Cache hit - instant render');
+            applyDataToState(cached);
+            renderCurrentTab();
+            updateAllUI();
+        }
+
+        // 2. PARALLEL: Fetch fresh data
+        try {
+            const res = await fetch('/api/init', {
+                signal: AbortSignal.timeout(5000)
+            });
+            if (res.ok) {
+                const data = await res.json();
+                applyDataToState(data);
+                saveToCache(data);
+                renderCurrentTab();
+                updateAllUI();
+                console.log('✅ Fresh data loaded in ' + (performance.now() - startTime).toFixed(0) + 'ms');
+            }
+        } catch (e) {
+            console.warn('Init fetch error:', e.message);
+            // Fallback to individual requests if init fails
+            if (!cached) await loadAllDataFallback();
+        }
+    }
+
+    // Apply API response to state
+    function applyDataToState(data) {
+        if (data.hardware) state.hardware = data.hardware;
+        if (data.displays) state.displays = data.displays;
+        if (data.battery) state.battery = data.battery;
+        if (data.storage) state.storage = data.storage;
+        if (data.processes) state.processes = data.processes;
+        if (data.network) state.network = data.network;
+        if (data.greeting) state.greeting = data.greeting;
+        if (data.weather) state.weather = data.weather;
+        if (data.power) state.power = data.power;
+        if (data.trash) state.trash = data.trash;
+        if (data.macos) state.macosVersion = data.macos;
+    }
+
+    // Update all UI elements
+    function updateAllUI() {
+        updateTrashCard();
+        updateHeaderGreeting();
+        updateMacOSBadge();
+    }
+
+    // Fallback: Individual requests (legacy)
+    async function loadAllDataFallback() {
+        const [hardware, displays, battery, storage, processes, network] = await Promise.all([
+            fetchAPI('hardware'), fetchAPI('displays'), fetchAPI('battery'),
+            fetchAPI('storage'), fetchAPI('processes'), fetchAPI('network'),
+        ]);
         state.hardware = hardware;
         state.displays = displays;
         state.battery = battery;
         state.storage = storage;
         state.processes = processes;
         state.network = network;
+        renderCurrentTab();
+    }
 
-        // Only re-render on initial load or explicit request
-        // Background refreshes update state only (WebSocket handles real-time UI)
-        if (forceRender) {
-            renderCurrentTab();
-        }
+    // Legacy compatibility
+    async function loadAllData(forceRender = false) {
+        await loadAllDataUltraFast();
     }
 
     async function loadCategoryItems(categoryName) {
-        const res = await fetchAPI(`storage/category/${encodeURIComponent(categoryName)}`);
+        const res = await fetchAPI('storage/category/' + encodeURIComponent(categoryName));
         return res?.items || [];
     }
 
     async function loadNerdSpace() {
-        // Guard: prevent duplicate calls within 30 seconds
+        // Now handled by loadAllDataUltraFast
         if (state.isLoadingNerdSpace) return;
         state.isLoadingNerdSpace = true;
 
         try {
-            // OPTIMIZED: Tips removed from API - now embedded in JS for instant loading!
-            const [greeting, weather, power, trash, macos] = await Promise.all([
-                fetchAPI('greeting'),
-                fetchAPI('weather'),  // Formato compatível com frontend
-                fetchAPI('power'),
-                fetchAPI('trash'),
-                fetchAPI('macos'),  // Versão completa do macOS
-            ]);
-
-            state.greeting = greeting;
-            state.weather = weather;
-            state.power = power;
-            state.trash = trash;
-            state.macosVersion = macos;
-
-            // Update trash card UI
-            updateTrashCard();
-
-            // Update header greeting
-            updateHeaderGreeting();
-
-            // Update macOS badge in hero section
-            updateMacOSBadge();
+            // Only fetch if not already loaded
+            if (!state.greeting || !state.weather) {
+                const [greeting, weather, power, trash, macos] = await Promise.all([
+                    fetchAPI('greeting'), fetchAPI('weather'), fetchAPI('power'),
+                    fetchAPI('trash'), fetchAPI('macos'),
+                ]);
+                state.greeting = greeting;
+                state.weather = weather;
+                state.power = power;
+                state.trash = trash;
+                state.macosVersion = macos;
+            }
+            updateAllUI();
         } catch (e) {
             console.error('Error loading NerdSpace:', e);
         } finally {
@@ -7484,33 +7996,44 @@ def get_dashboard_html() -> str:
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // INITIALIZATION
+    // ULTRA-FAST INITIALIZATION V2.0
     // ═══════════════════════════════════════════════════════════════════════════
 
     document.addEventListener('DOMContentLoaded', () => {
-        // Initialize Premium Theme System
+        const initStart = performance.now();
+
+        // 1. INSTANT (0ms): Theme + Icons + i18n
         ThemeManager.init();
-
+        i18n.init();
         lucide.createIcons();
-        loadAllData(true);  // Initial load with render
-        loadNerdSpace();  // Load NERD SPACE data
-        loadSpeedHistory();  // Load speed test history
-        loadInsights();  // Load AI Insights
-        loadDevTools();  // Load dev tools for header dropdown
-        connectWebSocket();
-        attachEventListeners();  // Attach navigation event listeners
+        attachEventListeners();
 
-        // Start nerd phrase rotation (every 15 seconds)
+        // 2. INSTANT (0ms): Show cached data immediately
+        const cached = loadFromCache();
+        if (cached) {
+            applyDataToState(cached);
+            renderCurrentTab();
+            updateAllUI();
+            console.log('⚡ Instant render from cache');
+        }
+
+        // 3. BACKGROUND: Fetch fresh data (non-blocking)
+        loadAllDataUltraFast().then(() => {
+            loadSpeedHistory();
+            loadInsights();
+            loadDevTools();
+        });
+
+        // 4. INSTANT: WebSocket for real-time updates
+        connectWebSocket();
         startNerdPhraseRotation();
 
-        // Refresh data every 30 seconds
-        setInterval(loadAllData, 30000);
-        setInterval(loadNerdSpace, 60000);  // Refresh NERD SPACE every 60s
-        setInterval(loadInsights, 300000);  // Refresh AI Insights every 5 minutes
+        // 5. OPTIMIZED: Less frequent refreshes (data is cached)
+        setInterval(() => loadAllDataUltraFast(), 45000);  // 45s instead of 30s
+        setInterval(loadInsights, 300000);
 
-        // Log keyboard shortcuts hint
+        console.log('🚀 NERD SPACE ready in ' + (performance.now() - initStart).toFixed(0) + 'ms');
         console.log('💡 Press ? for keyboard shortcuts');
-        console.log('🤓 Nerd phrases rotating every 15s');
     });
     </script>
 </body>

@@ -7,3 +7,4 @@ aiofiles>=23.2.1
 apscheduler>=3.10.4
 aiohttp>=3.9.0
 httpx>=0.26.0
+pyobjc-framework-CoreWLAN>=10.0

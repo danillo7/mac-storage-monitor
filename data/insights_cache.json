@@ -1,15 +1,15 @@
 {
-  "timestamp": "2026-01-05T17:16:21.738308",
+  "timestamp": "2026-01-05T19:56:13.500766",
   "insights": [
     {
       "category": "storage",
       "severity": "success",
       "title": "Storage Saud\u00e1vel",
-      "description": "524.2GB livres. Seu SSD est\u00e1 bem organizado!",
+      "description": "518.2GB livres. Seu SSD est\u00e1 bem organizado!",
       "action": null,
       "action_type": null,
       "icon": "\ud83d\udfe2",
-      "metric_value": "524.2GB",
+      "metric_value": "518.2GB",
       "metric_label": "livres"
     },
     {
@@ -27,11 +27,11 @@
       "category": "network",
       "severity": "success",
       "title": "Internet R\u00e1pida",
-      "description": "\u00daltimo teste: 556 Mbps download, 22ms lat\u00eancia.",
+      "description": "\u00daltimo teste: 432 Mbps download, 24ms lat\u00eancia.",
       "action": null,
       "action_type": null,
       "icon": "\ud83d\ude80",
-      "metric_value": "556",
+      "metric_value": "432",
       "metric_label": "Mbps"
     }
   ]

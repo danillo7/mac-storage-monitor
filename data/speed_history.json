@@ -288,14 +288,48 @@
           "max_parallel": 8
         }
       }
+    },
+    {
+      "timestamp": "2026-01-05T18:07:11.714725",
+      "download_mbps": 431.6,
+      "upload_mbps": 260.2,
+      "latency_ms": 24.2,
+      "jitter_ms": 1.0,
+      "server": "Cloudflare",
+      "provider": {
+        "ip": "",
+        "city": "Unknown",
+        "region": "",
+        "country": "BR",
+        "org": "",
+        "provider_name": "Unknown"
+      },
+      "status": "completed",
+      "details": {
+        "latency_samples": 20,
+        "download": {
+          "speed_mbps": 431.6,
+          "measurements": 3,
+          "duration": 15.31,
+          "total_bytes": 350000000,
+          "max_parallel": 6
+        },
+        "upload": {
+          "speed_mbps": 260.2,
+          "measurements": 8,
+          "duration": 6.58,
+          "total_bytes": 155000000,
+          "max_parallel": 7
+        }
+      }
     }
   ],
   "last_test": {
-    "timestamp": "2026-01-04T23:14:30.162688",
-    "download_mbps": 555.5,
-    "upload_mbps": 377.9,
-    "latency_ms": 21.7,
-    "jitter_ms": 0.8,
+    "timestamp": "2026-01-05T18:07:11.714725",
+    "download_mbps": 431.6,
+    "upload_mbps": 260.2,
+    "latency_ms": 24.2,
+    "jitter_ms": 1.0,
     "server": "Cloudflare",
     "provider": {
       "ip": "",
@@ -309,18 +343,18 @@
     "details": {
       "latency_samples": 20,
       "download": {
-        "speed_mbps": 555.5,
-        "measurements": 5,
-        "duration": 10.61,
-        "total_bytes": 500000000,
-        "max_parallel": 4
+        "speed_mbps": 431.6,
+        "measurements": 3,
+        "duration": 15.31,
+        "total_bytes": 350000000,
+        "max_parallel": 6
       },
       "upload": {
-        "speed_mbps": 377.9,
-        "measurements": 11,
-        "duration": 6.5,
-        "total_bytes": 245000000,
-        "max_parallel": 8
+        "speed_mbps": 260.2,
+        "measurements": 8,
+        "duration": 6.58,
+        "total_bytes": 155000000,
+        "max_parallel": 7
       }
     }
   }

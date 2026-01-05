@@ -1411,27 +1411,31 @@ def get_processes_detailed() -> Dict[str, Any]:
     }
 
 def get_network_info() -> Dict[str, Any]:
-    """Get comprehensive network and WiFi info - Premium Quality"""
+    """Get comprehensive network and WiFi info using CoreWLAN (macOS native)"""
     import re
 
     # Local IP (try multiple interfaces)
     local_ip = run_cmd("ipconfig getifaddr en0") or run_cmd("ipconfig getifaddr en1") or "N/A"
 
-    # Get comprehensive WiFi info via system_profiler
+    # Initialize WiFi data
     wifi_data = {
         "connected": False,
         "ssid": "N/A",
         "bssid": "N/A",
         "phy_mode": "N/A",
+        "phy_mode_friendly": "N/A",
         "channel": "N/A",
+        "channel_num": 0,
         "band": "N/A",
         "width": "N/A",
         "security": "N/A",
+        "security_level": "unknown",
         "signal_dbm": 0,
         "noise_dbm": 0,
         "snr": 0,
         "signal_percent": 0,
         "signal_quality": "N/A",
+        "signal_color": "#888888",
         "tx_rate": 0,
         "mcs_index": "N/A",
         "country_code": "N/A",
@@ -1439,148 +1443,197 @@ def get_network_info() -> Dict[str, Any]:
         "mac_address": "N/A",
     }
 
-    # Parse system_profiler SPAirPortDataType for rich WiFi info
-    airport_info = run_cmd("system_profiler SPAirPortDataType 2>/dev/null")
-    if airport_info:
-        lines = airport_info.split('\n')
-        in_current_network = False
+    # Try CoreWLAN first (native macOS API - works on Tahoe+)
+    try:
+        from CoreWLAN import CWInterface, CWWiFiClient
 
-        for i, line in enumerate(lines):
-            line_stripped = line.strip()
+        client = CWWiFiClient.sharedWiFiClient()
+        interface = client.interface()
 
-            # Interface name
-            if "Interfaces:" in line:
-                for j in range(i+1, min(i+5, len(lines))):
-                    if "en" in lines[j] and ":" in lines[j]:
-                        wifi_data["interface"] = lines[j].strip().rstrip(":")
-                        break
+        if interface:
+            wifi_data["interface"] = interface.interfaceName() or "en0"
+            wifi_data["mac_address"] = interface.hardwareAddress() or "N/A"
 
-            # MAC Address
-            if "MAC Address:" in line:
-                wifi_data["mac_address"] = line.split(":", 1)[1].strip()
+            # Power state
+            if interface.powerOn():
+                wifi_data["connected"] = True
 
-            # Status
-            if "Status:" in line:
-                status = line.split(":", 1)[1].strip()
-                wifi_data["connected"] = status.lower() == "connected"
+                # SSID - requires Location Services permission
+                ssid = interface.ssid()
+                if ssid:
+                    wifi_data["ssid"] = ssid
+                else:
+                    # Fallback: try networksetup (may also be redacted)
+                    ssid_cmd = run_cmd("networksetup -getairportnetwork en0 2>/dev/null")
+                    if ssid_cmd and "Current Wi-Fi Network:" in ssid_cmd:
+                        ssid_val = ssid_cmd.split(":", 1)[1].strip()
+                        if ssid_val and ssid_val != "<redacted>":
+                            wifi_data["ssid"] = ssid_val
+                    # If still N/A, mark as permission needed
+                    if wifi_data["ssid"] == "N/A":
+                        wifi_data["ssid"] = "(Requer Location Services)"
+                        wifi_data["ssid_permission_needed"] = True
 
-            # Current Network Information section
-            if "Current Network Information:" in line:
-                in_current_network = True
-                # SSID is usually the next indented line
-                for j in range(i+1, min(i+3, len(lines))):
-                    next_line = lines[j].strip()
-                    if next_line and ":" not in next_line[:20] and not next_line.startswith("PHY"):
-                        # This is likely the SSID (network name as a header)
-                        wifi_data["ssid"] = next_line.rstrip(":")
-                        break
+                # BSSID - requires Location Services permission
+                bssid = interface.bssid()
+                if bssid:
+                    wifi_data["bssid"] = bssid
 
-            # Parse current network details
-            if in_current_network:
-                if "PHY Mode:" in line:
-                    phy = line.split(":", 1)[1].strip()
-                    wifi_data["phy_mode"] = phy
-                    # Translate PHY mode to friendly name
-                    if "ax" in phy.lower():
-                        wifi_data["phy_mode_friendly"] = "Wi-Fi 6 (802.11ax)"
-                    elif "ac" in phy.lower():
-                        wifi_data["phy_mode_friendly"] = "Wi-Fi 5 (802.11ac)"
-                    elif "n" in phy.lower():
-                        wifi_data["phy_mode_friendly"] = "Wi-Fi 4 (802.11n)"
+                # RSSI (Signal strength) - works without permission
+                rssi = interface.rssiValue()
+                if rssi and rssi != 0:
+                    signal = int(rssi)
+                    wifi_data["signal_dbm"] = signal
+
+                    # Convert RSSI to percentage (-30 = 100%, -90 = 0%)
+                    signal_percent = min(100, max(0, (signal + 90) * 100 // 60))
+                    wifi_data["signal_percent"] = signal_percent
+
+                    # Quality assessment
+                    if signal >= -50:
+                        wifi_data["signal_quality"] = "Excelente"
+                        wifi_data["signal_color"] = "#22c55e"
+                    elif signal >= -60:
+                        wifi_data["signal_quality"] = "Muito Bom"
+                        wifi_data["signal_color"] = "#84cc16"
+                    elif signal >= -67:
+                        wifi_data["signal_quality"] = "Bom"
+                        wifi_data["signal_color"] = "#eab308"
+                    elif signal >= -70:
+                        wifi_data["signal_quality"] = "Regular"
+                        wifi_data["signal_color"] = "#f97316"
+                    elif signal >= -80:
+                        wifi_data["signal_quality"] = "Fraco"
+                        wifi_data["signal_color"] = "#ef4444"
                     else:
-                        wifi_data["phy_mode_friendly"] = phy
+                        wifi_data["signal_quality"] = "Muito Fraco"
+                        wifi_data["signal_color"] = "#dc2626"
 
-                if "Channel:" in line:
-                    channel_info = line.split(":", 1)[1].strip()
-                    wifi_data["channel"] = channel_info
-                    # Parse channel to get band and width
-                    if "5GHz" in channel_info:
-                        wifi_data["band"] = "5 GHz"
-                    elif "2GHz" in channel_info or "2.4GHz" in channel_info:
+                # Noise - works without permission
+                noise = interface.noiseMeasurement()
+                if noise and noise != 0:
+                    wifi_data["noise_dbm"] = int(noise)
+                    if wifi_data["signal_dbm"] != 0:
+                        wifi_data["snr"] = wifi_data["signal_dbm"] - wifi_data["noise_dbm"]
+
+                # TX Rate (Mbps) - works without permission
+                tx_rate = interface.transmitRate()
+                if tx_rate:
+                    wifi_data["tx_rate"] = int(tx_rate)
+
+                # Channel info - works without permission
+                channel = interface.wlanChannel()
+                if channel:
+                    ch_num = channel.channelNumber()
+                    wifi_data["channel_num"] = ch_num
+
+                    # Channel width
+                    width = channel.channelWidth()
+                    width_map = {0: "20 MHz", 1: "40 MHz", 2: "80 MHz", 3: "160 MHz", 4: "80+80 MHz"}
+                    wifi_data["width"] = width_map.get(width, f"{width}?")
+
+                    # Band from channel number
+                    if ch_num <= 14:
                         wifi_data["band"] = "2.4 GHz"
-                    elif "6GHz" in channel_info:
-                        wifi_data["band"] = "6 GHz"
-                    # Parse width
-                    width_match = re.search(r'(\d+)MHz', channel_info)
-                    if width_match:
-                        wifi_data["width"] = f"{width_match.group(1)} MHz"
-                    # Extract just channel number
-                    ch_match = re.search(r'^(\d+)', channel_info)
-                    if ch_match:
-                        wifi_data["channel_num"] = int(ch_match.group(1))
-
-                if "Country Code:" in line:
-                    wifi_data["country_code"] = line.split(":", 1)[1].strip()
-
-                if "Security:" in line:
-                    security = line.split(":", 1)[1].strip()
-                    wifi_data["security"] = security
-                    # Categorize security level
-                    if "WPA3" in security:
-                        wifi_data["security_level"] = "excellent"
-                    elif "WPA2" in security:
-                        wifi_data["security_level"] = "good"
-                    elif "WPA" in security:
-                        wifi_data["security_level"] = "fair"
-                    elif "WEP" in security:
-                        wifi_data["security_level"] = "poor"
-                    elif "None" in security or "Open" in security:
-                        wifi_data["security_level"] = "none"
+                    elif ch_num <= 177:
+                        wifi_data["band"] = "5 GHz"
                     else:
-                        wifi_data["security_level"] = "unknown"
+                        wifi_data["band"] = "6 GHz"
 
-                if "Signal / Noise:" in line:
-                    sn_parts = line.split(":", 1)[1].strip()
-                    # Parse "-55 dBm / -94 dBm"
-                    sn_match = re.search(r'(-?\d+)\s*dBm\s*/\s*(-?\d+)\s*dBm', sn_parts)
-                    if sn_match:
-                        signal = int(sn_match.group(1))
-                        noise = int(sn_match.group(2))
-                        wifi_data["signal_dbm"] = signal
-                        wifi_data["noise_dbm"] = noise
-                        wifi_data["snr"] = signal - noise
-                        # Convert RSSI to percentage (rough approximation)
-                        # -30 dBm = 100%, -90 dBm = 0%
-                        signal_percent = min(100, max(0, (signal + 90) * 100 // 60))
-                        wifi_data["signal_percent"] = signal_percent
-                        # Quality assessment
-                        if signal >= -50:
-                            wifi_data["signal_quality"] = "Excelente"
-                            wifi_data["signal_color"] = "#22c55e"  # green
-                        elif signal >= -60:
-                            wifi_data["signal_quality"] = "Muito Bom"
-                            wifi_data["signal_color"] = "#84cc16"  # lime
-                        elif signal >= -67:
-                            wifi_data["signal_quality"] = "Bom"
-                            wifi_data["signal_color"] = "#eab308"  # yellow
-                        elif signal >= -70:
-                            wifi_data["signal_quality"] = "Regular"
-                            wifi_data["signal_color"] = "#f97316"  # orange
-                        elif signal >= -80:
-                            wifi_data["signal_quality"] = "Fraco"
-                            wifi_data["signal_color"] = "#ef4444"  # red
-                        else:
-                            wifi_data["signal_quality"] = "Muito Fraco"
-                            wifi_data["signal_color"] = "#dc2626"  # dark red
+                    wifi_data["channel"] = f"{ch_num} ({wifi_data['band']}, {wifi_data['width']})"
 
-                if "Transmit Rate:" in line:
-                    tx = line.split(":", 1)[1].strip()
-                    tx_match = re.search(r'(\d+)', tx)
-                    if tx_match:
-                        wifi_data["tx_rate"] = int(tx_match.group(1))
+                # PHY Mode - works without permission
+                phy_mode = interface.activePHYMode()
+                phy_map = {
+                    0: ("None", "Desconectado"),
+                    1: ("802.11a", "Wi-Fi Legacy (802.11a)"),
+                    2: ("802.11b", "Wi-Fi Legacy (802.11b)"),
+                    3: ("802.11g", "Wi-Fi Legacy (802.11g)"),
+                    4: ("802.11n", "Wi-Fi 4 (802.11n)"),
+                    5: ("802.11ac", "Wi-Fi 5 (802.11ac)"),
+                    6: ("802.11ax", "Wi-Fi 6 (802.11ax)"),
+                    7: ("802.11be", "Wi-Fi 7 (802.11be)"),
+                }
+                if phy_mode in phy_map:
+                    wifi_data["phy_mode"] = phy_map[phy_mode][0]
+                    wifi_data["phy_mode_friendly"] = phy_map[phy_mode][1]
 
-                if "MCS Index:" in line:
-                    wifi_data["mcs_index"] = line.split(":", 1)[1].strip()
+                # Security - works without permission
+                security = interface.security()
+                security_map = {
+                    0: ("None", "none"),
+                    1: ("WEP", "poor"),
+                    2: ("WPA Personal", "fair"),
+                    3: ("WPA Personal Mixed", "fair"),
+                    4: ("WPA2 Personal", "good"),
+                    5: ("Personal", "good"),
+                    6: ("Dynamic WEP", "poor"),
+                    7: ("WPA Enterprise", "good"),
+                    8: ("WPA Enterprise Mixed", "good"),
+                    9: ("WPA2 Enterprise", "good"),
+                    10: ("Enterprise", "good"),
+                    11: ("WPA3 Personal", "excellent"),
+                    12: ("WPA3 Enterprise", "excellent"),
+                    13: ("WPA3 Transition", "excellent"),
+                }
+                if security in security_map:
+                    wifi_data["security"] = security_map[security][0]
+                    wifi_data["security_level"] = security_map[security][1]
 
-                if "BSSID:" in line:
-                    wifi_data["bssid"] = line.split(":", 1)[1].strip()
+                # Country code - may require permission
+                country = interface.countryCode()
+                if country:
+                    wifi_data["country_code"] = country
 
-    # Fallback for SSID if not found
-    if wifi_data["ssid"] == "N/A":
-        ssid_cmd = run_cmd("networksetup -getairportnetwork en0 2>/dev/null")
-        if ssid_cmd and "Current Wi-Fi Network:" in ssid_cmd:
-            wifi_data["ssid"] = ssid_cmd.split(":", 1)[1].strip()
-            wifi_data["connected"] = True
+    except ImportError:
+        # CoreWLAN not available, fallback to system_profiler
+        pass
+    except Exception as e:
+        # Log error but continue with fallback
+        print(f"CoreWLAN error: {e}")
+
+    # Fallback to system_profiler if CoreWLAN didn't get data
+    if wifi_data["signal_dbm"] == 0:
+        airport_info = run_cmd("system_profiler SPAirPortDataType 2>/dev/null")
+        if airport_info:
+            lines = airport_info.split('\n')
+            in_current_network = False
+
+            for i, line in enumerate(lines):
+                if "Interfaces:" in line:
+                    for j in range(i+1, min(i+5, len(lines))):
+                        if "en" in lines[j] and ":" in lines[j]:
+                            wifi_data["interface"] = lines[j].strip().rstrip(":")
+                            break
+
+                if "MAC Address:" in line:
+                    wifi_data["mac_address"] = line.split(":", 1)[1].strip()
+
+                if "Status:" in line:
+                    status = line.split(":", 1)[1].strip()
+                    wifi_data["connected"] = status.lower() == "connected"
+
+                if "Current Network Information:" in line:
+                    in_current_network = True
+
+                if in_current_network:
+                    if "Signal / Noise:" in line:
+                        sn_parts = line.split(":", 1)[1].strip()
+                        sn_match = re.search(r'(-?\d+)\s*dBm\s*/\s*(-?\d+)\s*dBm', sn_parts)
+                        if sn_match:
+                            signal = int(sn_match.group(1))
+                            noise = int(sn_match.group(2))
+                            wifi_data["signal_dbm"] = signal
+                            wifi_data["noise_dbm"] = noise
+                            wifi_data["snr"] = signal - noise
+                            signal_percent = min(100, max(0, (signal + 90) * 100 // 60))
+                            wifi_data["signal_percent"] = signal_percent
+
+                    if "Transmit Rate:" in line:
+                        tx = line.split(":", 1)[1].strip()
+                        tx_match = re.search(r'(\d+)', tx)
+                        if tx_match:
+                            wifi_data["tx_rate"] = int(tx_match.group(1))
 
     # Get router/gateway info
     gateway = run_cmd("netstat -nr | grep default | head -1 | awk '{print $2}'")
